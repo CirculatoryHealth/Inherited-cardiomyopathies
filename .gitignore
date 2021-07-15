@@ -1,2 +1,23 @@
+# Temporary files
 data/temp/*
 .gitignore~
+.DS_Store
+*~
+
+# R files
+.Rproj.user
+*.Rhistory
+*.RData
+*.Ruserdata
+*.Rmd
+*.rds
+
+# Data files
+*.doc*
+*key
+*.html
+*sv
+
+# Log files
+*log
+*out
