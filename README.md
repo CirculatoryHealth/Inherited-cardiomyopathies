@@ -30,3 +30,13 @@ bash prep_clinvar_SNPs_script1.sh [arg1]
 ```
 bash Mimount_ARVC_SNPs_script.sh
 ```
+
+## Extracted pathogenic mutations and WES data in UK Biobank
+Here, we calculate allele frequency (AF) of extracted pathogenic mutations using 200K exomes in UKBB. You can choose sample size for AF calculation by selecting RV or LV.   
+```
+bash run_clinvarSNPs_WES_UKB_script2.sh.sh [arg1] [arg2]
+```
+`[arg1]`: **ARVC, DCM, or HCM**
+`[arg2]`: **LV or RV**
+
+##
