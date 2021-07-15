@@ -36,7 +36,7 @@ Here, we calculate allele frequency (AF) of extracted pathogenic mutations using
 ```
 bash run_clinvarSNPs_WES_UKB_script2.sh.sh [arg1] [arg2]
 ```
-`[arg1]`: **ARVC, DCM, or HCM**
-`[arg2]`: **LV or RV**
+`[arg1]`: **ARVC, DCM, or HCM**   
+`[arg2]`: **LV or RV**    
 
 ##
