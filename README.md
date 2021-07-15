@@ -15,7 +15,7 @@ Here we perform extraction of [Likely] pathogenic mutations for cardiomyopathies
 - Upload file to HPC and rename it with DCM/ARVC/HCM__P_and_LP_v3.txt.
 - Run following command with [Argument1] which must be **ARVC, DCM, or HCM**:
 ```
-prep_clinvar_SNPs_script1.sh [arg1]
+bash prep_clinvar_SNPs_script1.sh [arg1]
 ```
 - Include Indel variants to extracted data by performing the following in 2 terminal screens:
   - In screen 1: find overlap of insertion and deletion:    
@@ -25,3 +25,9 @@ prep_clinvar_SNPs_script1.sh [arg1]
     1. Use `less` to view the file then use "/" to paste each position from screen 1 "column2", then check if the indel is the same.   
     2. Compare indel in overlap to the one in `${DIS}_P_and_LP_positionID` file, then write them in excel sheet.
     3. Add matched indels to `overlap_path_SNPs_WES_SNPs.txt`.   
+
+:warning: FOR ARVC, **Mimount** provides extra SNPs for both GRCh37 and GRCh38 in `WES_ARVC_mB.csv`. We run the following command to obtain all SNPs in GRCh38 and add to the the list. 
+```
+bash Mimount_ARVC_SNPs_script.sh
+## cat overlapped_ukb_ARVC_all_in_build38_snps >> overlap_path_SNPs_WES_SNPs.txt
+```
