@@ -118,7 +118,7 @@ else
 ## SNP position ID for UKB WES 200K (NO NEED to do it if the file already created)
     if [ ! -e ${INPUT}/ukb_SNP_ID_WES_chrALL.txt ]; then
       for CHR in $(seq 1 22); do
-        awk '{print $2, $1":"$4":"$6":"$5}' ${UKB_200K_WES}/UKBexomeOQFE_200K_chr${CHR}_v1.bim >> ${INPUT}/ukb_SNP_ID_WES_chrALL.txt
+        awk '{print $2, $1":"$4":"$6":"$5}' ${UKB_200K_WES}/UKBexomeOQFE_200K_chr${CHR}_v1.bim >> ${TEMP}/${DIS}/ukb_SNP_ID_WES_chrALL.txt
       done
     fi
 
