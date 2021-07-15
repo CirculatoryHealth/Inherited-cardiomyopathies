@@ -1,0 +1,14 @@
+Ethnicity Ethnic_background
+Pack_years_smoking Pack_years_of_smoking
+Past_tobaccosmoking Past_tobacco_smoking
+Total_Cholesterol Cholesterol
+HDL HDL_cholesterol
+LDL LDL_direct
+Height Standing_height
+Weight Weight
+Ventricular_rate Ventricular_rate
+P_duration P_duration
+QRS_duration QRS_duration
+Systolic_brachial_blood_pressure Systolic_brachial_blood_pressure
+Diastolic_brachial_blood_pressure Diastolic_brachial_blood_pressure
+Smoking_status Smoking_status
