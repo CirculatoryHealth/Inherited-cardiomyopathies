@@ -56,7 +56,8 @@ backup <- d
 
 message("Preparing helper files...")
 desc <- read.table(paste0(files, "/Dictionary_Field_ID_desc.tsv"), 
-                   header = TRUE, sep = "\t", quote = "") 
+                   header = TRUE, sep = "\t", quote = "", 
+                   stringsAsFactors = FALSE) 
 for (line in 1:nrow(desc)) {
   x <- desc[line, 1]
   desc[line, 1] <- paste0("f.", x, ".")
@@ -68,6 +69,8 @@ summ <- read.table(paste0(files, "/Summary_outcomes.txt"), sep = "\t",
                    header = TRUE, stringsAsFactors = FALSE, quote = "")
 rep <- read.table(paste0(files, "/UKB_repeat_measurements.txt"), 
                   header = FALSE, stringsAsFactors = FALSE, quote = "") 
+nas <- read.table(paste0(files, "/UKB_missing_merge.txt"),
+                  header = FALSE, stringsAsFactors = FALSE, quote = "")
 
 
 # Defining fields ---------------------------------------------------------
@@ -276,13 +279,40 @@ for (line in 1:nrow(rep)) {
   setTxtProgressBar(pbar, line)
   
 } # end-averaging loop
-rm(line, inst, x, temp, z)
+rm(line, inst, x, temp)
 close(pbar)
 
 
 # Manipulating some columns -----------------------------------------------
 
 message("Manipulating some columns")
+d <- as.data.frame(d)
+cols <- names(d)
+for (line in 1:nrow(nas)) {
+  sels <- strsplit(nas[line, 2], ";")[[1]]
+  for (s in sels) {
+    if (s == sels[1]) {
+      temp <- dplyr::select(d, c(f.eid, starts_with(paste0(s, "."))))
+    } else {
+      temp1 <- dplyr::select(d, c(f.eid, starts_with(s)))
+      temp <- merge(temp, unique(temp1), all = TRUE, by = "f.eid")
+    } # end ifelse-loop for initiating new temporary df
+  } # end for-loop iterating over dplyr::selecting columns
+  
+  if (ncol(temp) > 1) {
+    temp[nas[line, 1]] <- temp[, 2]
+    for (c in 3:(ncol(temp)-1)) {
+      temp[, ncol(temp)][is.na(temp[, ncol(temp)])] <- temp[, c][is.na(temp[, ncol(temp)])]
+    } # end for-loop iterating over columns
+    temp <- temp[, c(1, ncol(temp))]
+    d <- merge(d, unique(temp), by = "f.eid", all = TRUE)
+    names(d)[ncol(d)] <- nas[line, 1]
+  } else {
+    message(paste0("Columns for this column don't exist:", nas[line, n]))
+  } # end ifelse loop existing columns
+} # end for-loop
+rm(line, sels, s, temp, temp1, c, cols)
+
 # In this loop we will check whether Ethnic_background.0.0 is present in the 
 # df and if so, the information will be used to summarize. First, NA's will 
 # be replaced by any value in other instances of the same column and then

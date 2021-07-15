@@ -124,48 +124,33 @@ rm(con, cvd, test, pval, df, ps, i, x, tmp, ref)
 
 # Filtering CM/HF diagnosed -----------------------------------------------
 
-cms <- c("Heart_Failure_SR", "Cardiomyopathy_SR", "DCM_SR", "HCM_SR", 
-         "Ventricular_arrhythmias_SR", "Cardiac_arrest_SR")
-cmr <- c("RVEDVi", "RVESVi", "RVSV", "RVEF", "RVPER", "RVPFR", "RVPAFR",
-         "LVEDVi", "LVESVi", "LVSV", "LVEF", "LVPER", "LVPFR", "LVPAFR",
-         "LVEDMi", "LVEDM/LVEDV", "LV_RV_EDV")
-ecg <- c("ECG_heart_rate.0_mean", "P_duration", "P_axis", "PQ_interval", 
-         "QRS_duration", "R_axis", "QTC_interval", "T_axis")
+cms <- c("Heart_Failure_sum", "Cardiomyopathy_sum", "DCM_sum", "HCM_sum", 
+         "Ventricular_arrhythmias_sum", "Cardiac_arrest_sum")
+ecg <- c("ECG_heart_rate.0_mean", "P_duration", "P_axis.2.0", 
+         "PQ_interval.2.0", "QRS_duration", "R_axis.2.0", 
+         "QTC_interval.2.0", "T_axis.2.0")
 
-lsi <- list()
-for (i in names(all)) {
-  df <- all[[i]] %>% dplyr::dplyr::select(f.eid, all_of(cms))
-  sick <- data.frame()
-  for (x in 2:ncol(df)) {
-    tmp <- data.frame(df[, 1][df[, x] == "Yes"])
-    names(tmp) <- "f.eid" 
-    if (nrow(tmp) > 0) {
-      tmp$Diagnose <- names(df)[x]
-    }
-    sick <- rbind(tmp, sick)
-  }
-  sick <- merge(all[[i]], sick, by = "f.eid", all.x = TRUE)
-  sick$Diagnose[is.na(sick$Diagnose)] <- "No"
-  sick$Diagnose <- as.factor(sick$Diagnose)
-  lsi[[i]] <- unique(sick)
-  
-  df <- all[[i]] %>% dplyr::dplyr::select(f.eid, any_of(cmr))
-  df$MRI <- rowMeans(df[, 2:ncol(df)], na.rm = TRUE)
-  df$MRI[!is.na(df$MRI)] <- "Yes"
-  df$MRI[df$MRI != "Yes"] <- "No"
-  df$MRI <- as.factor(df$MRI)
-  lsi[[i]] <- merge(lsi[[i]], df[, c(1, ncol(df))])
-  
-  df <- all[[i]] %>% dplyr::dplyr::select(f.eid, any_of(ecg))
-  df$ECG <- rowMeans(df[, 2:ncol(df)], na.rm = TRUE)
-  df$ECG[!is.na(df$ECG)] <- "Yes"
-  df$ECG[df$ECG != "Yes"] <- "No"
-  df$ECG <- as.factor(df$ECG)
-  lsi[[i]] <- merge(lsi[[i]], df[, c(1, ncol(df))])
-}
+d <- df %>% select(f.eid, all_of(cms))
+d[, "CVD_diagnosis"] <- as.integer(apply(d[, 2:ncol(d)], 1, function(r) any(r %in% c(grep("Yes", r, value = T)))))
+d <- d %>% select(f.eid, CVD_diagnosis)
+d$CVD_diagnosis <- ifelse(d$CVD_diagnosis >= 1, "Yes", "No")
+df <- merge(df, unique(d), by = "f.eid", all.x = TRUE)
 
-filt <- data.frame()
-for (i in 1:length(lsi)) {
-  filt <- rbind(filt, lsi[[i]])
-}
-saveRDS(filt, file = "Data/processed/All_Diagnose_ECG_MRI.rds")
+d <- df %>% select(f.eid, starts_with("LV"), starts_with("RV")) %>%
+  select(!c(LV, RV))
+d$MRI <- rowMeans(d[, 2:ncol(d)], na.rm = TRUE)
+d$MRI[!is.na(d$MRI)] <- "Yes"
+d$MRI[d$MRI != "Yes"] <- "No"
+d$MRI <- as.factor(d$MRI)
+d <- d %>% select(f.eid, MRI)
+df <- merge(df, unique(d), by = "f.eid", all.x = TRUE)
+
+d <- df %>% dplyr::dplyr::select(f.eid, any_of(ecg))
+d$ECG <- rowMeans(d[, 2:ncol(d)], na.rm = TRUE)
+d$ECG[!is.na(d$ECG)] <- "Yes"
+d$ECG[d$ECG != "Yes"] <- "No"
+d$ECG <- as.factor(d$ECG)
+d <- d %>% select(f.eid, ECG)
+df <- merge(df, unique(d), by = "f.eid", all.x = TRUE)
+
+saveRDS(df, file = "data/processed/MCM_filter_ready_full.rds")
