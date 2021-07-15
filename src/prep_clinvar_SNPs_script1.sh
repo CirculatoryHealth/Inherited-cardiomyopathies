@@ -94,7 +94,6 @@ else
 
     ### TOOLS
     OVERLAP=/hpc/local/CentOS7/dhl_ec/software/overlap.pl
-    MERGE=/hpc/local/CentOS7/dhl_ec/software/merge_tables.pl
 
     ### PROJECT SPECIFIC
     PROJECTDIR=/hpc/dhl_ec/aalasiri/scripts/Inherited_cardiomyopathies # the root directoryto repo
@@ -102,12 +101,6 @@ else
     OUTPUT=${PROJECTDIR}/data/processed
     TEMP=${PROJECTDIR}/data/temp
     UKB_200K_WES=/hpc/ukbiobank/WES_200K_2020
-
-
-### Directories
-#MAIN_DIR=/hpc/dhl_ec/aalasiri/Mendelian_CM_MRI_Exome_200K
-#DIR=${MAIN_DIR}/${DIS}
-#UKB_200K_WES=/hpc/ukbiobank/WES_200K_2020
 
 
 ### STEP 1 ###
