@@ -66,7 +66,7 @@ script_arguments_error() {
 }
 
 echobold "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-echobold "+               Extract [Likely] pathogenic mutations for cardiomyopathies from Clinvar                 +"
+echobold "+            Extraction of [Likely] pathogenic mutations for cardiomyopathies from Clinvar              +"
 echobold "+                                                                                                       +"
 echobold "+                                                                                                       +"
 echobold "+ * Written by  : Abdulrahman Alasiri                                                                   +"
@@ -111,13 +111,6 @@ else
 
 
 ### STEP 1 ###
-
-## In ClinVar search ""Arrhythmogenic right ventricular cardiomyopathy"[dis] OR "Arrhythmogenic right ventricular dysplasia"[dis] OR "Arrhythmogenic cardiomyopathy"[dis]" ## put all alternative name of the disease
-## Click on pathogenic and Likely pathogenic
-## Download file with these features; Format:Tabular (text), Sort by:Location
-## Upload file to HPC and rename it with DCM/ARVC/HCM_P_and_LP_select_positionID
-
-### Extract important column
 ## Extract snps loci  from ClinVar
     echo "ID GRCh38Position" > ${TEMP}/${DIS}_P_and_LP_positionID
     cat ${INPUT}/${DIS}_P_and_LP_v3.txt | sed 's/ /_/g6' | awk -F"\t" '{print $15,$10,$11,$15}' | cut -d ' ' -f1,2,3 | sed 's/:/ /1; s/ /:/3; s/_-_/ /g' | awk '{print $2,$3,$2}' | sed 's/:/ /4' | awk '{print $1,$2":"$4}' | tail -n +2 >> ${TEMP}/${DIS}_P_and_LP_positionID
@@ -130,14 +123,14 @@ else
     fi
 
 ## Overlap with WES
-    ${OVERLAP} ${TEMP}/${DIS}_P_and_LP_positionID 2 ${INPUT}/ukb_SNP_ID_WES_chrALL.txt 2 | cut -d' ' -f1 >  ${TEMP}/${DIS}_overlap_path_SNPs_WES_SNPs.txt
-    sed 's/:/ /g5' ${INPUT}/ukb_SNP_ID_WES_chrALL.txt > ${DIR}/ukb_SNP_ID_WES_chrALL.txt_position # replace ":" between position and ref to space
-    sed 's/:/ /g4' ${DIR}/${DIS}_P_and_LP_positionID > ${DIR}/${DIS}_P_and_LP_positionID_position
-    ${OVERLAP} ${DIR}/${DIS}_P_and_LP_positionID_position 2 ${DIR}/ukb_SNP_ID_WES_chrALL.txt_position 2 > ${TEMP}/${DIS}_overlap_path_SNPs_WES_SNPs.txt_position # get overlap by position
+    ${OVERLAP} ${TEMP}/${DIS}_P_and_LP_positionID 2 ${INPUT}/ukb_SNP_ID_WES_chrALL.txt 2 | cut -d' ' -f1 >  ${OUTPUT}/${DIS}_overlap_path_SNPs_WES_SNPs.txt
+    sed 's/:/ /g5' ${INPUT}/ukb_SNP_ID_WES_chrALL.txt > ${TEMP}/${DIS}_ukb_SNP_ID_WES_chrALL.txt_position # replace ":" between position and ref to space
+    sed 's/:/ /g4' ${DIR}/${DIS}_P_and_LP_positionID > ${TEMP}/${DIS}_P_and_LP_positionID_position
+    ${OVERLAP} ${TEMP}/${DIS}_P_and_LP_positionID_position 2 ${TEMP}/${DIS}_ukb_SNP_ID_WES_chrALL.txt_position 2 > ${OUTPUT}/${DIS}_overlap_path_SNPs_WES_SNPs.txt_position # get overlap by position
 
 ### In screen 1
-##/hpc/local/CentOS7/dhl_ec/software/overlap.pl ${TEMP}/${DIS}_overlap_path_SNPs_WES_SNPs.txt 1 ${TEMP}/${DIS}_overlap_path_SNPs_WES_SNPs.txt_position 1 -v | awk '$1 ~ /I/ {print $0}' | less # get non-overlap Insersion
-##/hpc/local/CentOS7/dhl_ec/software/overlap.pl ${TEMP}/${DIS}_overlap_path_SNPs_WES_SNPs.txt 1 ${TEMP}/${DIS}_overlap_path_SNPs_WES_SNPs.txt_position 1 -v | awk '$1 ~ /D/ {print $0}' | less  # get non-overlap Deletion
+##/hpc/local/CentOS7/dhl_ec/software/overlap.pl ${OUTPUT}/${DIS}_overlap_path_SNPs_WES_SNPs.txt 1 ${OUTPUT}/${DIS}_overlap_path_SNPs_WES_SNPs.txt_position 1 -v | awk '$1 ~ /I/ {print $0}' | less # get non-overlap Insersion
+##/hpc/local/CentOS7/dhl_ec/software/overlap.pl ${OUTPUT}/${DIS}_overlap_path_SNPs_WES_SNPs.txt 1 ${OUTPUT}/${DIS}_overlap_path_SNPs_WES_SNPs.txt_position 1 -v | awk '$1 ~ /D/ {print $0}' | less  # get non-overlap Deletion
 ### in screen 2
 ##less ${DIS}_P_and_LP_positionID ## search in 'less' usin "/" then paste each position from screen 1 "column2", then check if the indel is the same
 ## compare indel in overlap to the one in ${DIS}_P_and_LP_positionID file, then write them in excel sheet
