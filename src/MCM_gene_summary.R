@@ -79,7 +79,11 @@ for (cm in levels(df$CM)) {
     tmp <- tmp %>% select_if(colSums(!is.na(.)) > 0)
     tmp[is.na(tmp)] <- 0
     
-    vars <- df %>% filter(CM == cm) %>% select(f.eid, ends_with("variant"))
+    vars <- df %>% filter(CM == cm) %>% 
+      select(f.eid, ends_with("variant")) %>%
+      as.data.frame()
+    vars[names(vars)[1:ncol(vars)]] <- lapply(vars[names(vars)[1:ncol(vars)]], as.character)
+    vars <- as.data.table(vars)
     vdf <- data.frame()
     for (line in 1:nrow(vars)) {
       var <- vars[line, f.eid]
@@ -90,6 +94,7 @@ for (cm in levels(df$CM)) {
       } # End iteration columns
     var <- c(var, rep(NA, (ncol(vars) - length(var))))
     vdf <- rbind(vdf, var)
+    vdf[names(vdf)[1:ncol(vdf)]] <- lapply(vdf[names(vdf)[1:ncol(vdf)]], as.character)
     }
     vdf[names(vdf)[2:ncol(vdf)]] <- lapply(vdf[names(vdf)[2:ncol(vdf)]], as.factor)
     vdf <- vdf %>% select_if(colSums(!is.na(.)) > 0)
@@ -121,8 +126,10 @@ for (cm in levels(df$CM)) {
     } # End iteration columns
     single <- c(single, rep(NA, (ncol(tmp) - length(single))))
     sdf <- rbind(sdf, single)
+    sdf[names(sdf)[1:ncol(sdf)]] <- lapply(sdf[names(sdf)[1:ncol(sdf)]], as.character)
     double <- c(double, rep(NA, (ncol(tmp) - length(double))))
     ddf <- rbind(ddf, double)
+    ddf[names(ddf)[1:ncol(ddf)]] <- lapply(ddf[names(ddf)[1:ncol(ddf)]], as.character)
   }
   
   sdf[names(sdf)[2:ncol(sdf)]] <- lapply(sdf[names(sdf)[2:ncol(sdf)]], as.factor)

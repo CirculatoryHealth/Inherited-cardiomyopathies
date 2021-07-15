@@ -27,9 +27,9 @@ options(scipen = 6, digits = 4) # view outputs in non-scientific notation
 #     #3 -- Output file name, for example MCM_clean_full
 
 args = commandArgs(trailingOnly = TRUE)
-path = args[1] # "data/raw/"
-suffix = args[2] # "_full.txt"
-output = args[3] # "MCM_clean_full"
+path = args[1] # "data/temp/"
+suffix = args[2] # "_raw.txt"
+output = args[3] # "MCM_raw_full"
 
 
 ## Loading packages -------------------------------------------------------
