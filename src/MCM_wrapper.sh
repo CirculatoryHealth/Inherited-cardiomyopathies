@@ -89,12 +89,11 @@ else
   INDEL=${3:-no}
 
   ### TOOLS
-  SOFTWARE="/hpc/local/CentOS7/dhl_ec/software"
   SCRIPT="${ROOT}/src"
-  PLINK="${SOFTWARE}/plink_v1.9"
-  OVERLAP="${SOFTWARE}/overlap.pl"
-  MERGE="${SOFTWARE}/merge_tables.pl"
-  TRANSPOSE="/hpc/dhl_ec/mvanvugt/scripts/transpose_perl.pl"
+  PLINK="/hpc/local/CentOS7/dhl_ec/software/plink_v1.9"
+  OVERLAP="bin/overlap.pl"
+  MERGE="bin/merge_tables.pl"
+  TRANSPOSE="bin/transpose_perl.pl"
 
   ### Directories
   UKB_200K_WES="/hpc/ukbiobank/WES_200K_2020"
@@ -120,7 +119,6 @@ else
   echo "Setting directories:"
   echo "Script directory: ____________________________ [ ${SCRIPT} ]"
   echo "Root directory: ______________________________ [ ${ROOT} ]"
-  echo "Software directory: __________________________ [ ${SOFTWARE} ]"
   echo "UKB WES genetic data: ________________________ [ ${UKB_200K_WES} ]"
   echo "UKB WES fam-directory: _______________________ [ ${UKB_200K_WES_FAM} ]"
   echo "Output directory: ____________________________ [ ${OUTPUT} ]"
