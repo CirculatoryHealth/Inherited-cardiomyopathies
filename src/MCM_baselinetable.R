@@ -124,7 +124,7 @@ write.csv(ex1, paste0(output, prefix, "_Table1.csv"))
 
 # And last but not least, the final dataframe used to create the baseline-
 # table is exported as well.
-write.table(df, paste0(output, prefix, "table1_data.tsv"), 
+write.table(df, paste0(output, prefix, "_table1_data.tsv"), 
             row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
-saveRDS(all, paste0(output, prefix, "table1_data.rds"))
+saveRDS(all, paste0(output, prefix, "_table1_data.rds"))
 

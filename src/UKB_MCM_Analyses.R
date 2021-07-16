@@ -17,109 +17,154 @@
 options(scipen = 6, digits = 4) # view outputs in non-scientific notation
 
 
+## Loading arguments --------------------------
+
+# Arguments expected:
+#     #1 -- Path to and name of the phenotype file, 
+#           for example /hpc/dhl_ec/mvanvugt/UKBB/Project1_ukb_phenotypes.tab
+#     #2 -- Directory to the helper files, 
+#           for example /hpc/dhl_ec/mvanvugt/Software/UKB-pipeline-Utrecht
+#     #3 -- Output directory, for example /hpc/dhl_ec/mvanvugt/UKBB
+#     #4 -- Prefix of the output files
+
+args = commandArgs(trailingOnly = TRUE)
+input = args[1] # "Data/processed/MCM_final_pheno.txt"
+# output = args[3] # "results/output/"
+# prefix = args[4] # "MCM"
+
+
 ## Loading functions ---------------------------
 
 library(plyr)
-source("~/functions.R") 
+source("src/functions.R") 
 
 
 ## Loading packages ---------------------------
 
 library(data.table)
+library(dplyr)
 library(ggpubr)
 library(viridis)
 
 
 # Loading Data ------------------------------------------------------------
 
+message("Loading data")
+df <- data.table(readRDS(input))
 
 
 # Prevalence --------------------------------------------------------------
 
+message("Calculating prevalence")
 prev <- data.table()
-for (i in 1:3) {
-  df <- all[[i]]
-  tmp <- perc_var(df, c("Gene_1", "Gene_2")) %>% 
-    na.omit() %>%
-    mutate(perc = count / 200643)
-  if (names(all)[i] == "hcm") {
-    dup <- tmp %>% filter(value == "MYH7")
-    tmp <- tmp %>% filter(value != "MYH7")
-    new <- c("MYH7", sum(dup$count), sum(dup$perc), "Gene")
-    tmp <- rbind(tmp, new)
+for (cm in levels(df$CM)) {
+  if (cm != "Controls") {
+    
+    f <- subset(df, CM == cm)
+    tmp <- perc_var(f, c("Gene_1", "Gene_2")) %>% 
+      na.omit() %>%
+      mutate(perc = count / 200643)
+    if (cm == "HCM") {
+      dup <- tmp %>% filter(value == "MYH7")
+      tmp <- tmp %>% filter(value != "MYH7")
+      new <- c("MYH7", sum(dup$count), sum(dup$perc), "Gene")
+      tmp <- rbind(tmp, new)
+    } else if (cm == "DCM") {
+      dup <- tmp %>% filter(value == "TNNI3")
+      tmp <- tmp %>% filter(value != "TNNI3")
+      new <- c("TNNI3", sum(dup$count), sum(dup$perc), "Gene")
+      tmp <- rbind(tmp, new)
+    } # End ifelse loop adding genes that occur twice
+    tmp$name <- cm
+    names(tmp) <- c("Gene", "N", "Prevalence_WES_UKB", "CM")
+    tmp$N <- as.numeric(tmp$N)
+    tmp$Prevalence_WES_UKB <- as.numeric(tmp$Prevalence_WES_UKB)
+    prev <- rbind(prev, tmp)
+    tmp <- tmp %>%
+      arrange(desc(Gene)) %>%
+      mutate(prop = N / sum(tmp$N) * 100) %>%
+      mutate(ypos = cumsum(prop) - 0.5 * prop)
+    
+    source("src/Piechart_genes.R")
+    
   }
-  tmp$name <- toupper(names(all)[i])
-  names(tmp) <- c("Gene", "N", "Prevalence_WES_UKB", "CM")
-  tmp$N <- as.numeric(tmp$N)
-  tmp$Prevalence_WES_UKB <- as.numeric(tmp$Prevalence_WES_UKB)
-  prev <- rbind(prev, tmp)
-  tmp <- tmp %>%
-    arrange(desc(Gene)) %>%
-    mutate(prop = N / sum(tmp$N) * 100) %>%
-    mutate(ypos = cumsum(prop) - 0.5 * prop)
-  source("src/Piechart_genes.R")
 } 
-write.table(prev, "Results/output/Prevalence.tsv", sep = "\t", quote = FALSE,
+write.table(prev, "results/output/Prevalence.tsv", sep = "\t", quote = FALSE,
             row.names = FALSE)
-rm(i, df, tmp)
+rm(cm, f, tmp, new, dup, m, pie, prev)
 
 
 # Enrichment CVDs ---------------------------------------------------------
 
-cvd <- all$hcm %>% 
-  select(Sex, Ethnicity, Cardiovascular_Death, All_cause_mortality, Ever_Smoked, 
-         ends_with("SR")) %>% 
-  names()
+message("Test for enrichment in certain phenotypes")
+cvd <- df %>% select(Sex, Ethnicity, ends_with("sum")) %>% names()
 test <- list()
 pval <- data.frame(Phenotype = cvd)
-for (i in 1:3) {
-  df <- rbind(all[[i]], all[[4]]) %>% dplyr::select(any_of(cvd), CM)
-  df$CM <- droplevels(df$CM)
-  ps <- vector()
-  for (x in 1:length(cvd)) {
-    tmp <- df[, c(x, ncol(df))]
-    test[[cvd[x]]] <- fisher.test(table(tmp), workspace = 1e9)
-    ps <- c(ps, test[[cvd[x]]]$p.value)
-    write.table(table(tmp), "Results/output/CVD_enrichment_XTab.tsv", 
-                sep = "\t", quote = FALSE, append = TRUE,
-                col.names = c(cvd[x], paste("Controls", toupper(names(all)[i]), 
-                                            sep = "_")))
+for (cm in levels(df$CM)) {
+  if (cm != "Controls") {
+    
+    f <- df %>% select(any_of(cvd), CM) %>% filter(CM %in% c(cm,  "Controls"))
+    f$CM <- droplevels(f$CM)
+    ps <- vector()
+    for (x in cvd) {
+      tmp <- f %>% dplyr::select(any_of(x), CM)
+      test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
+      ps <- c(ps, test[[x]]$p.value)
+      write.table(table(tmp), "results/output/CVD_enrichment_XTab.tsv", 
+                  sep = "\t", quote = FALSE, append = TRUE,
+                  col.names = c(x, paste("Controls", cm, sep = "_")))
+    }
+    pval <- cbind(pval, ps)
+    names(pval)[ncol(pval)] <- cm
+    
   }
-  pval <- cbind(pval, ps)
-  names(pval)[ncol(pval)] <- toupper(names(all)[i])
 }
-write.table(pval, "Results/output/CVD_enrichment_fisher.tsv", sep = "\t", 
+write.table(pval, "results/output/CVD_enrichment_fisher.tsv", sep = "\t", 
             quote = FALSE, row.names = FALSE)
-rm(test, pval, df, ps, i, tmp, x)
+rm(test, pval, f, ps, cm, tmp, x)
 
 
 # Other statistics --------------------------------------------------------
 
-con <- all$hcm %>% 
-  select(!c(f.eid, Ethnicity, Death, CM, any_of(cvd))) %>% 
-  names()
+cmr <- df %>% select(starts_with("RV"), starts_with("LV")) %>% 
+  select(!c(LV, RV)) %>% names()
+ecg <- c("ECG_heart_rate.0_mean", "P_duration", "P_axis.2.0", 
+         "PQ_interval.2.0", "QRS_duration", "R_axis.2.0", 
+         "QTC_interval.2.0", "T_axis.2.0")
+met <- df %>% select(starts_with("MET")) %>% names()
+bp <- df %>% select(Total_Cholesterol, HDL, LDL,
+                    contains("blood_pressure_mean")) %>% names()
+cols <- c("Age_when_attended_assessment_centre.0.0", "BMI", met, bp, ecg, cmr)
+
 test <- list()
-pval <- data.frame(Phenotype = con)
-for (i in 1:3) {
-  df <- rbind(all[[i]], all[[4]]) %>% dplyr::select(any_of(con), CM)
-  df$CM <- droplevels(df$CM)
-  ps <- vector()
-  sta <- vector()
-  for (x in 1:(length(df)-1)) {
-    tmp <- df[, x][df$CM == toupper(names(all)[i])]
-    ref <- df[, x][df$CM == "CONTROLS"]
-    test[[names(df)[x]]] <- wilcox.test(tmp, ref)
-    ps <- c(ps, test[[names(df)[x]]]$p.value)
-    sta <- c(sta, test[[names(df)[x]]]$statistic)
-  }
-  pval <- cbind(pval, ps)
-  names(pval)[ncol(pval)] <- paste0(toupper(names(all)[i]), "_P")
-  pval <- cbind(pval, sta)
-  names(pval)[ncol(pval)] <- paste0(toupper(names(all)[i]), "_statistic")
-}
-write.table(pval, "Results/output/Differences_Continuous_Wilcox.tsv", 
+pval <- data.frame(Phenotype = cols)
+for (cm in levels(df$CM)) {
+  if (cm != "Controls") {
+    
+    f <- df %>% select(CM, any_of(cols)) %>% 
+      filter(CM %in% c(cm,  "Controls")) %>% as.data.frame()
+    f$CM <- droplevels(f$CM)
+    ps <- vector()
+    sta <- vector()
+    for (x in names(f)) {
+      if (x != "CM") {
+        tmp <- subset(f, CM == cm)[, x]
+        ref <- subset(f, CM == "Controls")[, x]
+        test[[x]] <- wilcox.test(tmp, ref)
+        ps <- c(ps, test[[x]]$p.value)
+        sta <- c(sta, test[[x]]$statistic)
+      } # End check for continuous variable
+    } # End iteration variables
+    pval <- cbind(pval, ps)
+    names(pval)[ncol(pval)] <- paste0(cm, "_P")
+    pval <- cbind(pval, sta)
+    names(pval)[ncol(pval)] <- paste0(cm, "_statistic")
+    
+  } # End check CM-group
+} # End iteration CMs
+write.table(pval, "results/output/Differences_Continuous_Wilcox.tsv", 
             sep = "\t", quote = FALSE, row.names = FALSE)
-rm(con, cvd, test, pval, df, ps, i, x, tmp, ref)
+rm(cols, cvd, test, pval, f, ps, cm, x, tmp, ref, cmr, ecg, met, bp, sta)
 
 
 # Filtering CM/HF diagnosed -----------------------------------------------
