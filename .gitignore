@@ -17,6 +17,7 @@ data/temp/*
 *key
 *.html
 *sv
+data/processed/*
 
 # Log files
 *log
