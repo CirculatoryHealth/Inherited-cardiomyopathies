@@ -107,6 +107,9 @@ else
   tail -n +2 /hpc/dhl_ec/aalasiri/CMR_metrics/PheWAS_MRI/ukb_MRI_LV_clean.txt | awk '{print $1,$1}' > ${ROOT}/ukb_MRI_LV_IID_clean.txt
   tail -n +2 /hpc/dhl_ec/aalasiri/CMR_metrics/PheWAS_MRI/ukb_MRI_RV_clean.txt | awk '{print $1,$1}' > ${ROOT}/ukb_MRI_RV_IID_clean.txt
 
+  # Adding indels to SNP-lists
+  cat ${INDEL} >> ${DIR}/${DIS}_overlap_LP_WES_SNPs.txt
+
   ## Allele freq. using Plink
   rm ${DIR}/${DIS}_WES_MRI_UKB_chrALL.allele_frq
   for CHR in $(seq 1 22); do

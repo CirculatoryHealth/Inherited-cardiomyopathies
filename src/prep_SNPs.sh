@@ -88,7 +88,8 @@ else
   DIS="$1"      ### Disease (DCM/HCM/ACM)
   CV="$2"
   VKGL="$3"
-  DIR="Data/temp"
+  DIR="data/temp"
+  OVERLAP="bin/overlap.pl"
 
   if [[ ! -d ${DIR}/temp ]]; then
     mkdir -v ${DIR}/temp

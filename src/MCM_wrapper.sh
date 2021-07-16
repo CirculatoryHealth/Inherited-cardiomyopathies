@@ -70,7 +70,7 @@ script_copyright_message() {
 script_arguments_error() {
 	echoerror "$1" # ERROR MESSAGE
   echoerror "- Argument #1   --  Root path, from which this script will be executed, could be '/hpc/dhl_ec/mvanvugt/UKBB'"
-  echoerror "- Argument #2   --  File name and path of/to the overlapping indels, could be '/hpc/dhl_ec/mvanvugt/UKBB/indels.txt' OR 'no' when this file still has to be created"
+  echoerror "- Argument #2   --  OPTIONAL: File name and path of/to the overlapping indels, could be '/hpc/dhl_ec/mvanvugt/UKBB/indels.txt' OR 'no' when this file still has to be created"
 	echoerror ""
 	echoerror "An example command would be: MCM_wrapper.sh [arg1: /hpc/dhl_ec/mvanvugt/UKBB] [arg3: /hpc/dhl_ec/mvanvugt/UKBB/indels.txt]."
 	echoerror "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
@@ -86,7 +86,7 @@ else
 
   ROOT="$1"
   cd ${ROOT}
-  INDEL="$3"
+  INDEL=${3:-no}
 
   ### TOOLS
   SOFTWARE="/hpc/local/CentOS7/dhl_ec/software"
