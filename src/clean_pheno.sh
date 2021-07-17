@@ -93,7 +93,7 @@ else
   Rscript --vanilla ${SCRIPT}/Combine_pheno.R data/temp/ _raw.txt MCM_raw_full
   echo ""
   echo "Summarizing genetic information"
-  Rscript --vanilla ${SCRIPT}/MCM_gene_summary.R data/raw/MCM_clean_full.rds data/raw data/processed MCM
+  Rscript --vanilla ${SCRIPT}/MCM_gene_summary.R data/raw/MCM_clean_full.rds data/raw data/processed/ MCM
   echo ""
   echo "Cleaning up the phenotype file"
   Rscript --vanilla ${SCRIPT}/MCM_pheno_clean.R data/raw/MCM_clean_full.rds data/raw data/processed MCM
