@@ -28,7 +28,7 @@ options(scipen = 6, digits = 4) # view outputs in non-scientific notation
 #     #4 -- Prefix of the output files
 
 args = commandArgs(trailingOnly = TRUE)
-input = args[1] # "Data/processed/MCM_final_pheno.txt"
+input = args[1] # "data/processed/MCM_final_pheno.txt"
 output = args[3] # "results/output/"
 prefix = args[4] # "MCM"
 
@@ -45,9 +45,6 @@ library(ggpubr)
 
 message("Loading data")
 df <- data.table(read.table(input, sep = " ", header = TRUE, quote = ""))
-
-
-# Some last-minute changes ------------------------------------------------
 
 
 # Making Baselinetable ----------------------------------------------------
@@ -70,19 +67,16 @@ bp <- df %>% select(Total_Cholesterol, HDL, LDL,
                     contains("blood_pressure_mean")) %>% names()
 diag <- df %>% select(ends_with("sum")) %>% names()
 cols <- c("Sex", "Age_when_attended_assessment_centre.0.0", "Ethnicity", 
-          "BMI", met, bp, diag, death, ecg, cmr, "CM")
+          "BMI", met, bp, diag, ecg, cmr, "CM")
 
 # A new df (df) is created, with all columns listed in cols
-df <- df %>% dplyr::select(f.eid, any_of(cols))
+df <- df %>% dplyr::select(f.eid, any_of(cols), ends_with("FirstDate"))
 
 
 # Now we'll create vectors with column names for the baseline-table.
 # fac.col contains all column names that should be regarded as factors
 # nn.col contains all columns that should be regarded as nonnormal (for now 
 # these are all columns except the factors, but can be changed of course).
-diag <- df %>% 
-  select(ends_with("sum")) %>%
-  names()
 fac.col <- c("Sex", "Ethnicity", diag, "CM")
 df <- as.data.frame(df)
 df[fac.col] <- lapply(df[fac.col], as.factor)

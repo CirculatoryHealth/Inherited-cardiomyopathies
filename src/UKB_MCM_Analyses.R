@@ -190,7 +190,7 @@ d$MRI <- as.factor(d$MRI)
 d <- d %>% select(f.eid, MRI)
 df <- merge(df, unique(d), by = "f.eid", all.x = TRUE)
 
-d <- df %>% dplyr::dplyr::select(f.eid, any_of(ecg))
+d <- df %>% dplyr::select(f.eid, any_of(ecg))
 d$ECG <- rowMeans(d[, 2:ncol(d)], na.rm = TRUE)
 d$ECG[!is.na(d$ECG)] <- "Yes"
 d$ECG[d$ECG != "Yes"] <- "No"

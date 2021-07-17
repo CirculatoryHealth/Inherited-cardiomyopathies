@@ -70,7 +70,7 @@ script_copyright_message() {
 script_arguments_error() {
 	echoerror "$1" # ERROR MESSAGE
   echoerror "- Argument #1   --  Root path, from which this script will be executed, could be '/hpc/dhl_ec/mvanvugt/UKBB'"
-  echoerror "- Argument #2   --  File name and path of/to the overlapping indels, could be '/hpc/dhl_ec/mvanvugt/UKBB/indels.txt' OR 'no' when this file still has to be created"
+  echoerror "- Argument #2   --  OPTIONAL: File name and path of/to the overlapping indels, could be '/hpc/dhl_ec/mvanvugt/UKBB/indels.txt' OR 'no' when this file still has to be created"
 	echoerror ""
 	echoerror "An example command would be: MCM_wrapper.sh [arg1: /hpc/dhl_ec/mvanvugt/UKBB] [arg3: /hpc/dhl_ec/mvanvugt/UKBB/indels.txt]."
 	echoerror "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
@@ -86,15 +86,14 @@ else
 
   ROOT="$1"
   cd ${ROOT}
-  INDEL="$3"
+  INDEL=${3:-no}
 
   ### TOOLS
-  SOFTWARE="/hpc/local/CentOS7/dhl_ec/software"
   SCRIPT="${ROOT}/src"
-  PLINK="${SOFTWARE}/plink_v1.9"
-  OVERLAP="${SOFTWARE}/overlap.pl"
-  MERGE="${SOFTWARE}/merge_tables.pl"
-  TRANSPOSE="/hpc/dhl_ec/mvanvugt/scripts/transpose_perl.pl"
+  PLINK="/hpc/local/CentOS7/dhl_ec/software/plink_v1.9"
+  OVERLAP="bin/overlap.pl"
+  MERGE="bin/merge_tables.pl"
+  TRANSPOSE="bin/transpose_perl.pl"
 
   ### Directories
   UKB_200K_WES="/hpc/ukbiobank/WES_200K_2020"
@@ -120,7 +119,6 @@ else
   echo "Setting directories:"
   echo "Script directory: ____________________________ [ ${SCRIPT} ]"
   echo "Root directory: ______________________________ [ ${ROOT} ]"
-  echo "Software directory: __________________________ [ ${SOFTWARE} ]"
   echo "UKB WES genetic data: ________________________ [ ${UKB_200K_WES} ]"
   echo "UKB WES fam-directory: _______________________ [ ${UKB_200K_WES_FAM} ]"
   echo "Output directory: ____________________________ [ ${OUTPUT} ]"

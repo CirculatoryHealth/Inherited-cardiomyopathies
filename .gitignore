@@ -3,6 +3,8 @@ data/temp/*
 .gitignore~
 .DS_Store
 *~
+plotly*
+core*
 
 # R files
 .Rproj.user
