@@ -51,6 +51,7 @@ library(viridis)
 
 message("Loading data")
 df <- data.table(readRDS(input))
+lof <- readRDS("data/processed/MCM_gene_summary.rds")
 
 
 # Prevalence --------------------------------------------------------------
@@ -199,3 +200,42 @@ d <- d %>% select(f.eid, ECG)
 df <- merge(df, unique(d), by = "f.eid", all.x = TRUE)
 
 saveRDS(df, file = "data/processed/MCM_filter_ready_full.rds")
+
+
+# Loss-of-Function --------------------------------------------------------
+
+lof <- data.table(read.delim("data/temp/MCM_LoF_genes.txt", sep = "\t", header = T, stringsAsFactors=FALSE))
+gen <- readRDS("data/processed/MCM_gene_summary.rds")[, 1:2]
+
+lof <- merge(gen, lof, by = "f.eid", all.x = TRUE)
+new <- lof %>% select(f.eid, CM) %>% data.table
+
+for (i in 3:ncol(lof)) {
+  g <- names(lof)[i]
+  sub <- data.frame(f.eid = subset(lof, lof[, i] == 1)[, 1])
+  if (nrow(sub) > 0) {
+    sub[, paste0(g, "_1")] <- "Yes"
+    new <- merge(new, unique(sub), by = "f.eid", all.x = TRUE)
+  }
+  sub <- data.frame(f.eid = subset(lof, lof[, i] == 2)[, 1])
+  if (nrow(sub) > 0) {
+    sub[, paste0(g, "_2")] <- "Yes"
+    new <- merge(new, unique(sub), by = "f.eid", all.x = TRUE)
+  }
+}
+new <- data.frame(new)
+new[is.na(new)] <- "No"
+new[2:ncol(new)] <- lapply(new[2:ncol(new)], as.factor)
+cols <- names(new)[3:ncol(new)]
+
+tab1 <- CreateTableOne(vars = cols, data = new, factorVars = cols, 
+                       strata = "CM", addOverall = FALSE)
+
+ex1 <- print(tab1, showAllLevels = FALSE, formatOptions = list(big.mark = ","), 
+             quote = FALSE, noSpaces = TRUE, printToggle = FALSE)
+
+write.csv(ex1, "results/output/LoF_Table.csv")
+
+write.table(new, "data/temp/LoF_Table_data.tsv", row.names = FALSE, 
+            col.names = TRUE, quote = FALSE, sep = "\t")
+saveRDS(new, "data/temp/LoF_Table_data.rds")

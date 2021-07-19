@@ -107,7 +107,7 @@ nn.col <- cols[!cols %in% fac.col]
 # columns are summarized into a table and then the rest. After exporting them,
 # the tables can simply be combined in excel.
 tab1 <- CreateTableOne(vars = cols, data = df, factorVars = fac.col, 
-                       strata = "CM", addOverall = TRUE)
+                       strata = "CM", addOverall = FALSE)
 #tab2 <- CreateTableOne(vars = cols[71:length(cols)], data = df_named, 
 #                       factorVars = fac.col, strata = "CM", addOverall = TRUE)
 ex1 <- print(tab1, showAllLevels = FALSE, missing = TRUE, nonnormal = nn.col,

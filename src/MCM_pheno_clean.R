@@ -111,10 +111,11 @@ for (line in 1:nrow(summ)) {
   
   if (name == "Family_Heart_Disease_sum") {
     
+    ids <- d %>% select(f.eid)
+    other <- grep(summ[line, 9], cols)
     o <- d %>% select(f.eid, any_of(names(d)[other])) %>% as.data.frame
     odf <- data.frame()
     for (col in 2:ncol(o)) {
-      other <- grep(summ[line, 9], cols)
       new <- subset(o, o[, col] == 1)
       new <- new %>% select(f.eid)
       odf <- rbind(odf, new)
