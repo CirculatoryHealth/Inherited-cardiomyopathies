@@ -21,6 +21,8 @@ options(scipen = 6, digits = 4) # view outputs in non-scientific notation
 
 library(dplyr)
 library(ggplot2)
+library("officer")
+library("rvg")
 
 
 # Start functions ---------------------------------------------------------
@@ -75,4 +77,19 @@ perc_var <- function(full, vars, desc = vars) {
   df <- do.call("rbind", list)
 }
 
+
+# Save figures to PPT -----------------------------------------------------
+
+create_pptx <- function(plt = last_plot(), path = file.choose()) {
+  if (!file.exists(path)) {
+    out <- read_pptx()
+  } else {
+    out <- read_pptx(path)
+  }
+  
+  out %>%
+    add_slide(layout = "4_Aangepaste indeling", master = "8_Office-thema") %>%
+    ph_with(value = dml(ggobj = plt), location = ph_location_fullsize()) %>%
+    print(target = path)
+}
 
