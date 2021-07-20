@@ -28,10 +28,10 @@ options(scipen = 6, digits = 4) # view outputs in non-scientific notation
 #     #4 -- Prefix of the output files
 
 args = commandArgs(trailingOnly = TRUE)
-pheno = args[1]
-files = args[2]
-output = args[3]
-prefix = args[4]
+pheno = args[1] # "data/raw/MCM_clean_full.rds"
+files = args[2] # "data/raw"
+output = args[3] # "data/processed/"
+prefix = args[4] # "MCM"
 
 
 ## Loading packages ---------------------------
@@ -109,39 +109,60 @@ for (line in 1:nrow(summ)) {
   
   name <- summ[line, 1]
   
-  if (!is.na(summ[line, 2])) {
-    meds <- grep(summ[line, 2], cols)
-    tmp.name <- gsub("sum", "meds", name)
-    d[, tmp.name] <- as.integer(apply(d[, ..meds], 1, function(r) any(r %in% c(grep(summ[line, 3], r, value = T)))))
-  } # End if medication
-  
-  if (!is.na(summ[line, 4])) {
-    icd10 <- grep(summ[line, 4], cols)
-    tmp.name <- gsub("sum", "icd10", name)
-    d[, tmp.name] <- as.integer(apply(d[, ..icd10], 1, function(r) any(r %in% c(grep(summ[line, 5], r, value = T)))))
-  } # End if ICD10
-  
-  if (!is.na(summ[line, 6])) {
-    death <- grep(summ[line, 6], cols)
-    tmp.name <- gsub("sum", "death", name)
-    d[, tmp.name] <- as.integer(apply(d[, ..death], 1, function(r) any(r %in% c(grep(summ[line, 5], r, value = T)))))
-  } # End if death
-  
-  if (!is.na(summ[line, 7])) {
-    sr <- grep(summ[line, 7], cols)
-    tmp.name <- gsub("sum", "sr", name)
-    d[, tmp.name] <- as.integer(apply(d[, ..sr], 1, function(r) any(r %in% c(grep(summ[line, 8], r, value = T)))))
-  } # End if self-reported
-  
-  if (!is.na(summ[line, 9])) {
+  if (name == "Family_Heart_Disease_sum") {
+    
+    ids <- d %>% select(f.eid)
     other <- grep(summ[line, 9], cols)
+    o <- d %>% select(f.eid, any_of(names(d)[other])) %>% as.data.frame
+    odf <- data.frame()
+    for (col in 2:ncol(o)) {
+      new <- subset(o, o[, col] == 1)
+      new <- new %>% select(f.eid)
+      odf <- rbind(odf, new)
+    } # End iteration columns
     tmp.name <- gsub("sum", "other", name)
-    d[, tmp.name] <- as.integer(apply(d[, ..other], 1, function(r) any(r %in% c(grep(summ[line, 10], r, value = T)))))
-  } # End if other
+    odf[, tmp.name] <- 1
+    odf <- merge(unique(ids), unique(odf), by = "f.eid", all.x = TRUE)
+    d <- merge(d, odf, by = "f.eid", all.x = TRUE)
+    
+  } else {
+    
+    if (!is.na(summ[line, 2])) {
+      meds <- grep(summ[line, 2], cols)
+      tmp.name <- gsub("sum", "meds", name)
+      d[, tmp.name] <- as.integer(apply(d[, ..meds], 1, function(r) any(r %in% c(grep(summ[line, 3], r, value = T)))))
+    } # End if medication
+    
+    if (!is.na(summ[line, 4])) {
+      icd10 <- grep(summ[line, 4], cols)
+      tmp.name <- gsub("sum", "icd10", name)
+      d[, tmp.name] <- as.integer(apply(d[, ..icd10], 1, function(r) any(r %in% c(grep(summ[line, 5], r, value = T)))))
+    } # End if ICD10
+    
+    if (!is.na(summ[line, 6])) {
+      death <- grep(summ[line, 6], cols)
+      tmp.name <- gsub("sum", "death", name)
+      d[, tmp.name] <- as.integer(apply(d[, ..death], 1, function(r) any(r %in% c(grep(summ[line, 5], r, value = T)))))
+    } # End if death
+    
+    if (!is.na(summ[line, 7])) {
+      sr <- grep(summ[line, 7], cols)
+      tmp.name <- gsub("sum", "sr", name)
+      d[, tmp.name] <- as.integer(apply(d[, ..sr], 1, function(r) any(r %in% c(grep(summ[line, 8], r, value = T)))))
+    } # End if self-reported
+    
+    if (!is.na(summ[line, 9])) {
+      other <- grep(summ[line, 9], cols)
+      tmp.name <- gsub("sum", "other", name)
+      d[, tmp.name] <- as.integer(apply(d[, ..other], 1, function(r) any(r %in% c(grep(summ[line, 10], r, value = T)))))
+    } # End if other
+    
+  } # Check for Family_Heart_Disease
   
-  tmp <- d %>% select(1, starts_with(gsub("sum", "", name)))
+  
+  tmp <- d %>% select(f.eid, starts_with(gsub("sum", "", name)))
   tmp[, name] <- ifelse(rowSums(tmp[, 2:ncol(tmp)], na.rm = TRUE) >= 1, "Yes", "No")
-  tmp <- tmp %>% select(1, all_of(name))
+  tmp <- tmp %>% select(f.eid, all_of(name))
   d <- merge(d, unique(tmp), by = "f.eid", all.x = TRUE)
   names(d)[ncol(d)] <- name
   
@@ -361,8 +382,8 @@ d <- merge(d, unique(temp))
 
 message("Saving data...")
 
-saveRDS(d, paste0(output, "/", prefix, "_cleaned.rds"))
-write.table(d, file = paste0(output, "/", prefix, "_cleaned.tsv"), sep = "\t",
+saveRDS(d, paste0(output, prefix, "_cleaned.rds"))
+write.table(d, file = paste0(output, prefix, "_cleaned.tsv"), sep = "\t",
             col.names = TRUE, row.names = FALSE, quote = FALSE)
 
 
