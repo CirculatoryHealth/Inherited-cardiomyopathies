@@ -73,7 +73,7 @@ script_arguments_error() {
   echoerror "- Argument #2   --  File name and path of/to the overlapping indels, could be '/hpc/dhl_ec/mvanvugt/UKBB/indels.txt'"
   echoerror "- Argument #3   --  File name and path of/to the log file, could be '/hpc/dhl_ec/mvanvugt/UKBB/log.txt'"
 	echoerror ""
-	echoerror "An example command would be: extract_IID.sh [arg1: DCM] [arg2: /hpc/dhl_ec/mvanvugt/UKBB/indels.txt]."
+	echoerror "An example command would be: extract_IID.sh [arg1: DCM] [arg2: /hpc/dhl_ec/mvanvugt/UKBB/indels.txt] [arg3: /hpc/dhl_ec/mvanvugt/UKBB/log.txt]."
 	echoerror "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   	# The wrong arguments are passed, so we'll exit the script now!
   	exit 1
@@ -88,7 +88,7 @@ else
   DIS="$1"      ### Disease (DCM/HCM/ACM)
   INDEL="$2"
   LOG="$3"
-  DIR="Data/temp"
+  DIR="data/temp"
   ROOT=$(pwd)
 
   if [[ ! -d ${DIR}/temp ]]; then
@@ -117,7 +117,7 @@ else
 
   # Adding indels to SNP-lists
   echo -e "$(wc -l ${INDEL} | cut -d" " -f1) indels included" >> ${TEMP}/${DIS}_log
-  cat ${INDEL} >> ${DIR}/${DIS}_overlap_LP_WES_SNPs.txt
+  awk '{print $1}' ${INDEL} >> ${DIR}/${DIS}_overlap_LP_WES_SNPs.txt
 
   ## Allele freq. using Plink
   rm ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.allele_frq
@@ -190,8 +190,9 @@ else
 
   echo "Making list of genes per SNP"
   head -1 ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.transpose | bin/transpose_perl.pl > ${TEMP}/${DIS}_snps_temp
-  awk '{print $1, $4}' ${TEMP}/${DIS}_LP_positionID > ${TEMP}/${DIS}_sng_temp
-  awk '{print $2, $4}' ${TEMP}/${DIS}_LP_positionID >> ${TEMP}/${DIS}_sng_temp
+  echo "ID Gene" > ${TEMP}/${DIS}_sng_temp
+  tail -n +2 ${TEMP}/${DIS}_LP_positionID | awk '{print $2, $4}' >> ${TEMP}/${DIS}_sng_temp
+  cat ${INDEL} >> ${TEMP}/${DIS}_sng_temp
   bin/merge_tables.pl --file1 ${TEMP}/${DIS}_sng_temp --file2 ${TEMP}/${DIS}_snps_temp --index ID | awk '{print $2}' > ${TEMP}/${DIS}_genes
 
   sed 's/0\///g' ${TEMP}/${DIS}_merge${NUM} | sed 's/NA/0/g' | sed 's/ /\t/g' > ${TEMP}/${DIS}_mutation_carriers_all.txt

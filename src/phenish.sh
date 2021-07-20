@@ -92,7 +92,7 @@ else
   OUT="data/raw"
   TEMP="data/temp/temp"
 
-  sed 's/X//g' ${TEMP}/${DIS}_IIDs_genes_variants.txt | sed 's/\./:/g' | sed 's/ /\t/g' | sed 's/ID/f.eid/' > ${TEMP}/${DIS}_IIDs_genes.tsv
+  sed 's/ /\t/g' ${TEMP}/${DIS}_IIDs_genes_variants.txt | sed 's/ID/f.eid/' > ${TEMP}/${DIS}_IIDs_genes.tsv
 
   echo "Last but not least, let's merge with the desired phenotypes"
   # Replace spaces to prevent delimiter problems

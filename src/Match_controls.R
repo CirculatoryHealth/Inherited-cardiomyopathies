@@ -21,16 +21,16 @@ options(scipen = 6, digits = 4) # view outputs in non-scientific notation
 ## Loading arguments --------------------------
 
 # Arguments expected:
-#     #1 -- Path to and name of the phenotype file, 
+#     #1 -- Path to and name of the phenotype file,
 #           for example /hpc/dhl_ec/mvanvugt/UKBB/Project1_ukb_phenotypes.tab
-#     #2 -- Directory to the helper files, 
+#     #2 -- Directory to the helper files,
 #           for example /hpc/dhl_ec/mvanvugt/Software/UKB-pipeline-Utrecht
 #     #3 -- Output directory, for example /hpc/dhl_ec/mvanvugt/UKBB
 #     #4 -- Prefix of the output files
 
 args = commandArgs(trailingOnly = TRUE)
-path = args[1] # "Data/temp"
-suffix = args[2] # "_full.txt"
+path = args[1] # "data/temp"
+suffix = args[2] # "_full.tsv"
 figs = args[3] # "Results/figures/UKB_MCM_Summary.pptx"
 
 
@@ -43,20 +43,20 @@ library(viridis)
 
 rm(list=setdiff(ls(), "all"))
 rm(list=ls())
-source("src/functions.R") 
+source("src/functions.R")
 
 
 # Loading data ------------------------------------------------------------
 
 dfs <- list()
-dfs$hcm <- readr::read_delim(paste0(path, "/HCM", suffix), " ", escape_double = FALSE, trim_ws = TRUE)
-dfs$dcm <- readr::read_delim(paste0(path, "/DCM", suffix), " ", escape_double = FALSE, trim_ws = TRUE)
-dfs$acm <- readr::read_delim(paste0(path, "/ACM", suffix), " ", escape_double = FALSE, trim_ws = TRUE)
+dfs$hcm <- readr::read_delim(paste0(path, "/HCM", suffix), "\t", escape_double = FALSE, trim_ws = TRUE)
+dfs$dcm <- readr::read_delim(paste0(path, "/DCM", suffix), "\t", escape_double = FALSE, trim_ws = TRUE)
+dfs$acm <- readr::read_delim(paste0(path, "/ACM", suffix), "\t", escape_double = FALSE, trim_ws = TRUE)
 
 PptPath <- figs
 mul <- 4 # Number of controls to be picked per case
 
-wes <- read.table(paste0(path, "/MCM_WES_pheno.tsv"), header = TRUE, 
+wes <- read.table(paste0(path, "/MCM_WES_pheno.tsv"), header = TRUE,
                   stringsAsFactors = FALSE)
 mri <- read.table(paste0(path, "/CMR_IDs.txt"), header = TRUE,
                   stringsAsFactors = FALSE)
@@ -76,9 +76,9 @@ rm(cmi, mri)
 wes$f.21000.0.0[is.na(wes$f.21000.0.0)] <- wes$f.21000.1.0[is.na(wes$f.21000.0.0)]
 wes$f.21000.0.0[is.na(wes$f.21000.0.0)] <- wes$f.21000.2.0[is.na(wes$f.21000.0.0)]
 
-wes <- wes %>% dplyr::select(f.eid, f.31.0.0, f.34.0.0, f.21000.0.0, 
+wes <- wes %>% dplyr::select(f.eid, f.31.0.0, f.34.0.0, f.21000.0.0,
                              f.21003.0.0, MRI)
-names(wes) <- c("f.eid", "Sex", "Year_of_birth", "Ethnic_background", 
+names(wes) <- c("f.eid", "Sex", "Year_of_birth", "Ethnic_background",
                 "Age_at_recruitment", "MRI")
 
 wes$Sex[wes$Sex == 1] <- "Male"
@@ -116,26 +116,26 @@ rm(wes)
 cases <- data.frame()
 controls <- data.frame()
 for (q in 1:length(dfs)) {
-  
+
   # Case Data Preparation ---------------------------------------------------
-  
+
   df <- dfs[[q]]
   df$f.21000.0.0[is.na(df$f.21000.0.0)] <- df$f.21000.1.0[is.na(df$f.21000.0.0)]
   df$f.21000.0.0[is.na(df$f.21000.0.0)] <- df$f.21000.2.0[is.na(df$f.21000.0.0)]
-  
-  df <- df %>% dplyr::select(f.eid, f.31.0.0, f.34.0.0, f.21000.0.0, 
+
+  df <- df %>% dplyr::select(f.eid, f.31.0.0, f.34.0.0, f.21000.0.0,
                                f.21003.0.0, Age_MRI)
-  names(df) <- c("f.eid", "Sex", "Year_of_birth", "Ethnic_background", 
+  names(df) <- c("f.eid", "Sex", "Year_of_birth", "Ethnic_background",
                   "Age_at_recruitment", "Age_MRI")
   df$MRI <- NA
   df$MRI[is.na(df$Age_MRI)] <- "No"
   df$MRI[!is.na(df$Age_MRI)] <- "Yes"
   df$MRI <- as.factor(df$MRI)
-  
+
   df$Sex[df$Sex == 1] <- "Male"
   df$Sex[df$Sex == 0] <- "Female"
   df$Sex <- as.factor(df$Sex)
-  
+
   df$Ethnicity <- NA
   df$Ethnicity[df$Ethnic_background == "1" | df$Ethnic_background == "1001" | df$Ethnic_background == "1002" | df$Ethnic_background == "1003"] <- "White"
   df$Ethnicity[df$Ethnic_background == "2" | df$Ethnic_background == "2001" | df$Ethnic_background == "2002" | df$Ethnic_background == "2003" | df$Ethnic_background == "2004"] <- "Mixed"
@@ -144,22 +144,22 @@ for (q in 1:length(dfs)) {
   df$Ethnicity[df$Ethnic_background == "5"] <- "Chinese"
   df$Ethnicity[df$Ethnic_background == "6"] <- "Other"
   df$Ethnicity <- as.factor(df$Ethnicity)
-  
+
   df$Age_cat <- NA
   df$Age_cat[df$Age_at_recruitment < 50] <- "<50"
   df$Age_cat[df$Age_at_recruitment >= 50 & df$Age_at_recruitment <= 60] <- "50-59"
   df$Age_cat[df$Age_at_recruitment > 60] <- ">60"
   df$Age_cat <- as.factor(df$Age_cat)
-  
+
   df <- df[, c(1, 2, 5, 7, 8, 9)]
-  
+
   mri <- subset(df, MRI == "Yes")
   rest <- subset(df, MRI == "No")
   cm <- names(dfs)[q]
-  
-  
+
+
   # Plotting ----------------------------------------------------------------
-  
+
   p <- rbind(perc_var(mri, "Sex", "MRI"), perc_var(rest, "Sex", "non-MRI")) %>%
     ggplot(aes(fill = value, x = name, y = perc)) +
     geom_col(position = position_dodge(width = 0.7),
@@ -171,12 +171,12 @@ for (q in 1:length(dfs)) {
     scale_fill_manual(name = "Sex", labels = c("Female", "Male"),
                       values = c("palevioletred1", "skyblue1")) +
     my_theme()
-  ggsave(paste0("Results/figures/Bar_sex_all_", 
+  ggsave(paste0("Results/figures/Bar_sex_all_",
                 toupper(cm), ".png"),
          plot = p)
   create_pptx(p, PptPath)
 
-  
+
   p <- rbind(perc_var(mri, "Ethnicity", "MRI"), perc_var(rest, "Ethnicity", "non-MRI")) %>%
     ggplot(aes(fill = value, x = name, y = perc)) +
     geom_col(position = position_dodge(width = 0.7),
@@ -187,56 +187,56 @@ for (q in 1:length(dfs)) {
               position = position_dodge(width = 0.7)) +
     scale_fill_viridis(discrete = TRUE, name = "Ethnic group") +
     my_theme()
-  ggsave(paste0("Results/figures/Bar_ethnic_all_", 
+  ggsave(paste0("Results/figures/Bar_ethnic_all_",
                 toupper(cm), ".png"),
          plot = p)
   create_pptx(p, PptPath)
-  
+
   p <- ggplot(mri, aes(Age_at_recruitment)) +
-    geom_histogram(color = "black", fill = "red3", 
+    geom_histogram(color = "black", fill = "red3",
                    aes(y = (..count..)/sum(..count..)), binwidth = 10) +
-    stat_bin(aes(y=(..count..)/sum(..count..), 
-                 label=(..count..)), 
+    stat_bin(aes(y=(..count..)/sum(..count..),
+                 label=(..count..)),
              geom="text", size=4, binwidth = 10, vjust=-.7) +
     facet_wrap(~Sex) +
     labs(x = "Age (in years)", y = "Percentage") +
     ggtitle(paste0("Age at recruitment - MRI ", toupper(cm))) +
     my_theme()
-  ggsave(paste0("Results/figures/Histogram_age_sex_MRI_", 
+  ggsave(paste0("Results/figures/Histogram_age_sex_MRI_",
                 toupper(cm), ".png"),
          plot = p)
   create_pptx(p, PptPath)
-  
+
   p <- ggplot(rest, aes(Age_at_recruitment)) +
-    geom_histogram(color = "black", fill = "red3", 
+    geom_histogram(color = "black", fill = "red3",
                    aes(y = (..count..)/sum(..count..)), binwidth = 10) +
-    stat_bin(aes(y=(..count..)/sum(..count..), 
-                 label=(..count..)), 
+    stat_bin(aes(y=(..count..)/sum(..count..),
+                 label=(..count..)),
              geom="text", size=4, binwidth = 10, vjust=-.7) +
     facet_wrap(~Sex) +
     labs(x = "Age (in years)", y = "Percentage") +
     ggtitle(paste0("Age at recruitment - nonMRI ", toupper(cm))) +
     my_theme()
-  ggsave(paste0("Results/figures/Histogram_age_sex_nonMRI_", 
+  ggsave(paste0("Results/figures/Histogram_age_sex_nonMRI_",
                 toupper(cm), ".png"),
          plot = p)
   create_pptx(p, PptPath)
-  
+
   p <- ggplot(df, aes(Age_at_recruitment)) +
-    geom_histogram(color = "black", fill = "red3", 
+    geom_histogram(color = "black", fill = "red3",
                    aes(y = (..count..)/sum(..count..)), binwidth = 10) +
-    stat_bin(aes(y=(..count..)/sum(..count..), 
-                 label=(..count..)), 
+    stat_bin(aes(y=(..count..)/sum(..count..),
+                 label=(..count..)),
              geom="text", size=4, binwidth = 10, vjust=-.7) +
     facet_wrap(~Sex) +
     labs(x = "Age (in years)", y = "Percentage") +
     ggtitle(paste0("Age at recruitment - all ", toupper(cm))) +
     my_theme()
-  ggsave(paste0("Results/figures/Histogram_age_sex_all_", 
+  ggsave(paste0("Results/figures/Histogram_age_sex_all_",
                 toupper(cm), ".png"),
          plot = p)
   create_pptx(p, PptPath)
-  
+
   df$CM <- toupper(names(dfs)[q])
   cases <- rbind(cases, df)
 } # end for-loop iteration CMs
@@ -254,9 +254,9 @@ for (s in 1:length(sub)) {
   for (race in levels(ok$Ethnicity)) {
     for (age in levels(ok$Age_cat)) {
       # Determine number of cases to be extracted
-      n <- ok %>% filter(Ethnicity == race) %>% 
+      n <- ok %>% filter(Ethnicity == race) %>%
         filter(Age_cat == age) %>% nrow() * mul
-      con <- suc[[s]] %>% filter(Ethnicity == race) %>% 
+      con <- suc[[s]] %>% filter(Ethnicity == race) %>%
         filter(Age_cat == age)
       rows <- sample(1:nrow(con), n)
       for (t in rows) {
@@ -282,5 +282,5 @@ for (s in 1:length(sub)) {
 rm(ok, race, age, n, con, rows, ind, id, t, m, row, nac, nas, s, r)
 
 cids <- as.data.frame(controls$f.eid)
-write.table(cids, paste0(path, "/Control_IDs.txt"), col.names = "f.eid", 
+write.table(cids, paste0(path, "/Control_IDs.txt"), col.names = "f.eid",
             row.names = FALSE, quote = FALSE)

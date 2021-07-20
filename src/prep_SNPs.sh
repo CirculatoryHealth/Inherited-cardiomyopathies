@@ -124,7 +124,7 @@ else
   tail -n +2 ${VKGL} | awk '{print $3 ":" $9 ":" $10, $3 ":" $9 ":" $10, $2 ":" $9 ":" $10, $4}' >> ${TEMP}/${DIS}_LP_positionID_temp
   echo ""
   # Filter for certain genes
-  awk '$2 == "DCM" {print $1}' ${DIR}/CM_genes.txt > ${TEMP}/${DIS}_genes.txt
+  awk -v cm=${DIS} '$2 == cm {print $1}' ${DIR}/CM_genes.txt > ${TEMP}/${DIS}_genes.txt
   echo "Checking for gene: "
   while IFS= read -r line; do
 

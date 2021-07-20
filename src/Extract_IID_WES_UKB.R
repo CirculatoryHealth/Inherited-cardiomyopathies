@@ -19,20 +19,21 @@ cat("Starting the loop of genes\n")
 for (i in 1:nrow(gen)) {
   x <- gen[i,]
   if (x %in% vec) {
-    
+
     cat(paste0("\nWorking on ", x, ", gene ", i, " / ", nrow(gen), "\n"))
     lok <- names(df)[grep(x, df)]
     ind[, paste0(x, "_variant")] <- as.integer(apply(df[, ..lok], 1, function(r) any(r %in% c(grep("1", r, value = T)))))
-    
+
   } else {
     cat(paste0("\n Gene ", x, " not found among the predefined genes, going to the next\n"))
     next
   }
 }
 
-  
+
 ind$Total_variants <- rowSums(ind[, 4:ncol(ind)], na.rm = TRUE)
 ind <- slice_head(ind, n = (nrow(ind)-1))
+ind <- ind %>% filter(Total_variants > 0)
 
 cat("\nWriting output")
 write.table(ind, output, col.names = TRUE, row.names = FALSE, quote = FALSE)
