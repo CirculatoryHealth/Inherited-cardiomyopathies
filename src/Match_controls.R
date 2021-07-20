@@ -282,5 +282,5 @@ for (s in 1:length(sub)) {
 rm(ok, race, age, n, con, rows, ind, id, t, m, row, nac, nas, s, r)
 
 cids <- as.data.frame(controls$f.eid)
-write.table(cids, paste0(path, "/Control_IDs.txt"), col.names = "f.eid",
+write.table(cids, paste0(path, "/Control_IDs.tsv"), col.names = "f.eid",
             row.names = FALSE, quote = FALSE)

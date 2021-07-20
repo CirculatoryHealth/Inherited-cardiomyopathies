@@ -61,6 +61,27 @@ gen <- read.table(paste0(files, "/CM_genes.txt"), col.names = c("Gene", "CM"))
 
 # Start renaming ----------------------------------------------------------
 
+d <- df %>% select(f.eid, CM, ends_with("variant")) %>% data.frame()
+vars <- data.frame()
+
+for (line in 1:nrow(d)) {
+  row <- d[line, 1]
+  
+  for (col in 3:ncol(d)) {
+    if (!is.na(d[line, col]) && d[line, col] == 1) {
+      row <- c(row, gsub("_variant", "", names(d)[c]))
+      
+    }
+
+  } # end iteration variants
+  row <- c(row, rep(NA, (ncol(d) - length(row) - 2)))
+  vars <- rbind(vars, row)
+  vars[names(vars)[1:ncol(vars)]] <- lapply(vars[names(vars)[1:ncol(vars)]], as.character)
+  
+  
+} # End iteration rows
+
+
 dfs <- list()
 # Summarizing the LoF-genes per CM
 for (cm in levels(df$CM)) {
