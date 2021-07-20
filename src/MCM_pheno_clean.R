@@ -154,7 +154,7 @@ for (line in 1:nrow(summ)) {
     if (!is.na(summ[line, 9])) {
       other <- grep(summ[line, 9], cols)
       tmp.name <- gsub("sum", "other", name)
-      d[, tmp.name] <- as.integer(apply(d[, ..other], 1, function(r) any(r %in% c(grep(summ[line, 10], r, value = T, fixed = T)))))
+      d[, tmp.name] <- as.integer(apply(d[, ..other], 1, function(r) any(r %in% c(grep(summ[line, 10], r, value = T)))))
     } # End if other
     
   } # Check for Family_Heart_Disease
