@@ -71,6 +71,7 @@ script_arguments_error() {
 	echoerror "$1" # ERROR MESSAGE
   echoerror "- Argument #1   --  Disease to perform analysis for, could be 'DCM'"
   echoerror "- Argument #2   --  File name and path of/to the overlapping indels, could be '/hpc/dhl_ec/mvanvugt/UKBB/indels.txt'"
+  echoerror "- Argument #3   --  File name and path of/to the log file, could be '/hpc/dhl_ec/mvanvugt/UKBB/log.txt'"
 	echoerror ""
 	echoerror "An example command would be: extract_IID.sh [arg1: DCM] [arg2: /hpc/dhl_ec/mvanvugt/UKBB/indels.txt]."
 	echoerror "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
@@ -78,20 +79,26 @@ script_arguments_error() {
   	exit 1
 }
 
-if [[ $# -lt 2 ]]; then
+if [[ $# -lt 3 ]]; then
   echo "Error, number of arguments found "$#"."
-  script_arguments_error "You must supply [2] correct arguments when running this script"
+  script_arguments_error "You must supply [3] correct arguments when running this script"
 
 else
 
   DIS="$1"      ### Disease (DCM/HCM/ACM)
   INDEL="$2"
+  LOG="$3"
   DIR="Data/temp"
+  ROOT=$(pwd)
 
   if [[ ! -d ${DIR}/temp ]]; then
     mkdir -v ${DIR}/temp
   fi
   TEMP="${DIR}/temp"
+  PLINK="/hpc/local/CentOS7/dhl_ec/software/plink_v1.9"
+  UKB_200K_WES="/hpc/ukbiobank/WES_200K_2020"
+  UKB_200K_WES_FAM='/hpc/dhl_ec/data/ukbiobank/WES_200K_2020'
+
 
   echo ""
   echo "Settings for this script:"
@@ -99,19 +106,21 @@ else
   echo "Directory: __________________ [ ${DIR} ]"
   echo "Indel file: _________________ [ ${INDEL} ]"
   echo "Temporary directory: ________ [ ${TEMP} ]"
+
   echo ""
 
   ### STEP 2 ###
   ### overlap samples betwen 200K WES and LV/RV
   ## get IID of LV/RV MRI after QC
-  tail -n +2 /hpc/dhl_ec/aalasiri/CMR_metrics/PheWAS_MRI/ukb_MRI_LV_clean.txt | awk '{print $1,$1}' > ${ROOT}/ukb_MRI_LV_IID_clean.txt
-  tail -n +2 /hpc/dhl_ec/aalasiri/CMR_metrics/PheWAS_MRI/ukb_MRI_RV_clean.txt | awk '{print $1,$1}' > ${ROOT}/ukb_MRI_RV_IID_clean.txt
+  tail -n +2 /hpc/dhl_ec/aalasiri/CMR_metrics/PheWAS_MRI/ukb_MRI_LV_clean.txt | awk '{print $1,$1}' > ${TEMP}/ukb_MRI_LV_IID_clean.txt
+  tail -n +2 /hpc/dhl_ec/aalasiri/CMR_metrics/PheWAS_MRI/ukb_MRI_RV_clean.txt | awk '{print $1,$1}' > ${TEMP}/ukb_MRI_RV_IID_clean.txt
 
   # Adding indels to SNP-lists
+  echo -e "$(wc -l ${INDEL} | cut -d" " -f1) indels included" >> ${TEMP}/${DIS}_log
   cat ${INDEL} >> ${DIR}/${DIS}_overlap_LP_WES_SNPs.txt
 
   ## Allele freq. using Plink
-  rm ${DIR}/${DIS}_WES_MRI_UKB_chrALL.allele_frq
+  rm ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.allele_frq
   for CHR in $(seq 1 22); do
     echo ${CHR}
     ${PLINK} --bed ${UKB_200K_WES}/UKBexomeOQFE_200K_chr${CHR}_v1.bed \
@@ -125,11 +134,16 @@ else
 
   awk '$5 != 0 {print $0}' ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.allele_frq > ${DIR}/${DIS}_WES_MRI_UKB_chrALL.allele_frq_filtered
   awk '{print $2}' ${DIR}/${DIS}_WES_MRI_UKB_chrALL.allele_frq_filtered > ${DIR}/${DIS}_overlap_LP_WES_SNPs_updated.txt
+  echo -e "$(wc -l ${DIR}/${DIS}_overlap_LP_WES_SNPs_updated.txt | cut -d" " -f1) SNPs with carriers in the UK Biobank" >> ${TEMP}/${DIS}_log
 
   # Remove SNPs that have overlap between HCM/DCM/ACM and are not annotated well
-  awk 'NR==FNR{a[$0];next}!($0 in a)' ${DIR}/${DIS}_remove_overlap.txt ${DIR}/${DIS}_overlap_LP_WES_SNPs_updated.txt > ${TEMP}/${DIS}_temp
-  mv ${TEMP}/${DIS}_temp ${DIR}/${DIS}_overlap_LP_WES_SNPs_updated.txt
+  if [[ -e data/raw/${DIS}_remove_overlap.txt ]]; then
+    echo -e "$(wc -l data/raw/${DIS}_remove_overlap.txt | cut -d" " -f1) SNPs removed due to ambiguous annotation" >> ${TEMP}/${DIS}_log
+    awk 'NR==FNR{a[$0];next}!($0 in a)' data/raw/${DIS}_remove_overlap.txt ${DIR}/${DIS}_overlap_LP_WES_SNPs_updated.txt > ${TEMP}/${DIS}_temp
+    mv ${TEMP}/${DIS}_temp ${DIR}/${DIS}_overlap_LP_WES_SNPs_updated.txt
+  fi
 
+  echo -e "$(wc -l ${DIR}/${DIS}_overlap_LP_WES_SNPs_updated.txt | cut -d" " -f1) SNPs to extract UKB-individuals for" >> ${TEMP}/${DIS}_log
   echo "Making vcf-files with only desired snps"
   for CHR in $(seq 1 22); do
     echo ${CHR}
@@ -150,10 +164,10 @@ else
   done
 
   echo "Transposing vcf-file so header are SNPs and rows are individuals"
-  tail -n +7 ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.vcf  | cut -f3,10- | ${SCRIPTDIR}/transpose_perl.pl > ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.transpose
+  tail -n +7 ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.vcf  | cut -f3,10- | bin/transpose_perl.pl > ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.transpose
 
   # Get number of lines
-  NUM=`awk 'NR == 1 {print NF}' ${DIR}/${DIS}_WES_MRI_UKB_chrALL.transpose`
+  NUM=`awk 'NR == 1 {print NF}' ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.transpose`
   echo ""
   echo "Making file with individuals per SNP"
   for SNP in $(seq 2 ${NUM}); do
@@ -167,39 +181,45 @@ else
   echo "Merging all seperate SNP-files"
   for SNP in $(seq 2 ${NUM}); do
     if [[ ${SNP} == 2 ]]; then
-      ${MERGE} --file1 ${TEMP}/${DIS}_SNP${SNP}_ID.txt --file2 ${DIR}/${DIS}_LP_allIDs.txt --index ID > ${TEMP}/${DIS}_merge${SNP}
+      bin/merge_tables.pl --file1 ${TEMP}/${DIS}_SNP${SNP}_ID.txt --file2 ${TEMP}/${DIS}_LP_allIDs.txt --index ID > ${TEMP}/${DIS}_merge${SNP}
     else
       MIN=$((${SNP}-1))
-      ${MERGE} --file1 ${TEMP}/${DIS}_SNP${SNP}_ID.txt --file2 ${TEMP}/${DIS}_merge${MIN} --index ID > ${TEMP}/${DIS}_merge${SNP}
+      bin/merge_tables.pl --file1 ${TEMP}/${DIS}_SNP${SNP}_ID.txt --file2 ${TEMP}/${DIS}_merge${MIN} --index ID > ${TEMP}/${DIS}_merge${SNP}
     fi
   done
 
   echo "Making list of genes per SNP"
-  head -1 ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.transpose | ${SCRIPTDIR}/transpose_perl.pl > ${TEMP}/${DIS}_snps_temp
-  awk '{print $1, $4}' ${DIR}/${DIS}_LP_positionID > ${TEMP}/${DIS}_sng_temp
-  awk '{print $2, $4}' ${DIR}/${DIS}_LP_positionID >> ${TEMP}/${DIS}_sng_temp
-  ${MERGE} --file1 ${TEMP}/${DIS}_sng_temp --file2 ${TEMP}/${DIS}_snps_temp --index ID | awk '{print $2}' > ${TEMP}/${DIS}_genes
+  head -1 ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.transpose | bin/transpose_perl.pl > ${TEMP}/${DIS}_snps_temp
+  awk '{print $1, $4}' ${TEMP}/${DIS}_LP_positionID > ${TEMP}/${DIS}_sng_temp
+  awk '{print $2, $4}' ${TEMP}/${DIS}_LP_positionID >> ${TEMP}/${DIS}_sng_temp
+  bin/merge_tables.pl --file1 ${TEMP}/${DIS}_sng_temp --file2 ${TEMP}/${DIS}_snps_temp --index ID | awk '{print $2}' > ${TEMP}/${DIS}_genes
 
   sed 's/0\///g' ${TEMP}/${DIS}_merge${NUM} | sed 's/NA/0/g' | sed 's/ /\t/g' > ${TEMP}/${DIS}_mutation_carriers_all.txt
-  ${SCRIPTDIR}/transpose_perl.pl ${TEMP}/${DIS}_genes > ${TEMP}/${DIS}_genes.transpose
+  bin/transpose_perl.pl ${TEMP}/${DIS}_genes > ${TEMP}/${DIS}_genes.transpose
   cat ${TEMP}/${DIS}_mutation_carriers_all.txt ${TEMP}/${DIS}_genes.transpose > ${TEMP}/${DIS}_all_mutation_carriers.txt
   echo ""
   echo "Adding columns for MRI overlap"
-  echo "ID LV" > ${ROOT}/ukb_MRI_LV_ID.txt
-  echo "ID RV" > ${ROOT}/ukb_MRI_RV_ID.txt
-  awk '{print $1, "yes"}' ${ROOT}/MRI/ukb_MRI_LV_IID_clean.txt >> ${ROOT}/ukb_MRI_LV_ID.txt
-  awk '{print $1, "yes"}' ${ROOT}/MRI/ukb_MRI_RV_IID_clean.txt >> ${ROOT}/ukb_MRI_RV_ID.txt
+  echo "ID LV" > ${DIR}/ukb_MRI_LV_ID.txt
+  echo "ID RV" > ${DIR}/ukb_MRI_RV_ID.txt
+  awk '{print $1, "yes"}' ${DIR}/ukb_MRI_LV_IID_clean.txt >> ${DIR}/ukb_MRI_LV_ID.txt
+  awk '{print $1, "yes"}' ${DIR}/ukb_MRI_RV_IID_clean.txt >> ${DIR}/ukb_MRI_RV_ID.txt
 
-  ${MERGE} --file1 ${ROOT}/ukb_MRI_LV_ID.txt --file2 ${TEMP}/${DIS}_all_mutation_carriers.txt --index ID > ${TEMP}/${DIS}_lv
-  ${MERGE} --file1 ${ROOT}/ukb_MRI_RV_ID.txt --file2 ${TEMP}/${DIS}_lv --index ID > ${TEMP}/${DIS}_ExtractIID_beforeDennis.txt
+  bin/merge_tables.pl --file1 ${DIR}/ukb_MRI_LV_ID.txt --file2 ${TEMP}/${DIS}_all_mutation_carriers.txt --index ID > ${TEMP}/${DIS}_lv
+  bin/merge_tables.pl --file1 ${DIR}/ukb_MRI_RV_ID.txt --file2 ${TEMP}/${DIS}_lv --index ID > ${TEMP}/${DIS}_SNPs_MRI.txt
   echo ""
   echo "Summarizing"
-  tail -n +2 ${TEMP}/${DIS}_genes | sort -u > ${DIR}/${DIS}_ExtractIID_genes.txt
-  echo "Genes for which there are carriers with mutations:" > ${DIR}/${DIS}_ExtractIID_beforeDennis.log
-  cat ${DIR}/${DIS}_ExtractIID_genes.txt >> ${DIR}/${DIS}_ExtractIID_beforeDennis.log
-  echo "" >> ${DIR}/${DIS}_ExtractIID_beforeDennis.log
-  echo "$(awk '{print $NF}' ${TEMP}/${DIS}_ExtractIID_beforeDennis.txt | grep -c yes) carriers have RV data" >> ${DIR}/${DIS}_ExtractIID_beforeDennis.log
-  echo "$(awk '{print $((NF-1))}' ${TEMP}/${DIS}_ExtractIID_beforeDennis.txt | grep -c yes) carriers have LV data" >> ${DIR}/${DIS}_ExtractIID_beforeDennis.log
+  tail -n +2 ${TEMP}/${DIS}_genes | sort -u | awk '$1 != "NA" {print}' > ${DIR}/${DIS}_ExtractIID_genes.txt
+  echo "" >> ${TEMP}/${DIS}_log
+  echo "Genes for which there are carriers with mutations:" >> ${TEMP}/${DIS}_log
+  cat ${DIR}/${DIS}_ExtractIID_genes.txt >> ${TEMP}/${DIS}_log
+  echo "" >> ${TEMP}/${DIS}_log
+  echo "$(awk '{print $NF}' ${TEMP}/${DIS}_SNPs_MRI.txt | grep -c yes) carriers have RV data" >> ${TEMP}/${DIS}_log
+  echo "$(awk '{print $((NF-1))}' ${TEMP}/${DIS}_SNPs_MRI.txt | grep -c yes) carriers have LV data" >> ${TEMP}/${DIS}_log
+  echo "" >> ${TEMP}/${DIS}_log
+
+  Rscript --vanilla ${ROOT}/src/Extract_IID_WES_UKB.R ${TEMP}/${DIS}_SNPs_MRI.txt ${DIR}/${DIS}_ExtractIID_genes.txt ${TEMP}/${DIS}_genes.txt ${TEMP}/${DIS}_IIDs_genes_variants.txt
+
+  cat ${TEMP}/${DIS}_log >> ${LOG}
 
   echo "Thanks for using this script!"
 fi

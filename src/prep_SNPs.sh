@@ -72,22 +72,24 @@ script_arguments_error() {
   echoerror "- Argument #1   --  Disease to perform analysis for, could be 'DCM'"
   echoerror "- Argument #2   --  Name of and path to file with the ClinVar results, could be 'data/raw/DCM_Clinvar_result_LP.txt'"
   echoerror "- Argument #3   --  Name of and path to file with the VKGL results, could be 'DCM_VKGL.txt'"
+  echoerror "- Argument #4   --  Name of and path to the log-file, could be 'data/raw/log.txt'"
 	echoerror ""
-	echoerror "An example command would be: prep_SNPs.sh [arg1: DCM] [arg2: DCM_Clinvar_result_LP.txt] [arg3: DCM_VKGL.txt]."
+	echoerror "An example command would be: prep_SNPs.sh [arg1: DCM] [arg2: DCM_Clinvar_result_LP.txt] [arg3: DCM_VKGL.txt] [arg4: data/raw/log.txt]."
 	echoerror "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   	# The wrong arguments are passed, so we'll exit the script now!
   	exit 1
 }
 
-if [[ $# -lt 3 ]]; then
+if [[ $# -lt 4 ]]; then
   echo "Error, number of arguments found "$#"."
-  script_arguments_error "You must supply [3] correct arguments when running this script"
+  script_arguments_error "You must supply [4] correct arguments when running this script"
 
 else
 
   DIS="$1"      ### Disease (DCM/HCM/ACM)
   CV="$2"
   VKGL="$3"
+  LOG="$4"
   DIR="data/temp"
   OVERLAP="bin/overlap.pl"
 
@@ -103,6 +105,7 @@ else
   echo "Clinvar file: _______________ [ ${CV} ]"
   echo "VKGL file: __________________ [ ${VKGL} ]"
   echo "Temporary directory: ________ [ ${TEMP} ]"
+  echo "Log-file: ___________________ [ ${LOG} ]"
   echo ""
 
   ### STEP 1 ###
@@ -113,11 +116,15 @@ else
   ## Upload file to HPC and rename it with ${DIS}_clinvar_result_LP.txt
 
   echo "Extract SNPs from the databases"
-  echo "ID Position_38 Position_37 Gene" > ${DIR}/${DIS}_LP_positionID
-  tail -n +2 ${CV} | sed 's/ /_/g' | awk -F"\t" '{print $2, $8, $9, $10, $11, $15}' | sed 's/:/ /g' | awk '{print $4 ":" $7 ":" $8 ":" $9, $4 ":" $5 ":" $8 ":" $9, $2 ":" $3 ":" $8 ":" $9, $1}' | sed 's/_-_\([0-9]\+\):/:/g' > ${DIR}/${DIS}_LP_positionID_temp
-  tail -n +2 ${VKGL} | awk '{print $3 ":" $9 ":" $10, $3 ":" $9 ":" $10, $2 ":" $9 ":" $10, $4}' >> ${DIR}/${DIS}_LP_positionID_temp
+  echo -e "$(wc -l ${CV} | cut -d" " -f1) SNPs extracted from the ClinVar database" >> ${TEMP}/${DIS}_log
+  echo -e "$(wc -l ${VKGL} | cut -d" " -f1) SNPs extracted from the VKGL database" >> ${TEMP}/${DIS}_log
+
+  echo "ID Position_38 Position_37 Gene" > ${TEMP}/${DIS}_LP_positionID
+  tail -n +2 ${CV} | sed 's/ /_/g' | awk -F"\t" '{print $2, $8, $9, $10, $11, $15}' | sed 's/:/ /g' | awk '{print $4 ":" $7 ":" $8 ":" $9, $4 ":" $5 ":" $8 ":" $9, $2 ":" $3 ":" $8 ":" $9, $1}' | sed 's/_-_\([0-9]\+\):/:/g' > ${TEMP}/${DIS}_LP_positionID_temp
+  tail -n +2 ${VKGL} | awk '{print $3 ":" $9 ":" $10, $3 ":" $9 ":" $10, $2 ":" $9 ":" $10, $4}' >> ${TEMP}/${DIS}_LP_positionID_temp
   echo ""
   # Filter for certain genes
+  awk '$2 == "DCM" {print $1}' ${DIR}/CM_genes.txt > ${TEMP}/${DIS}_genes.txt
   echo "Checking for gene: "
   while IFS= read -r line; do
 
@@ -126,17 +133,20 @@ else
 
     echo "${GENE}"
     # Only add the variants that are in certain genes
-    grep ${GENE} ${DIR}/${DIS}_LP_positionID_temp >> ${DIR}/${DIS}_LP_positionID
+    grep ${GENE} ${TEMP}/${DIS}_LP_positionID_temp >> ${TEMP}/${DIS}_LP_positionID
 
-  done < "${DIR}/${DIS}_genes.txt"
+  done < "${TEMP}/${DIS}_genes.txt"
+  echo -e "$(wc -l ${TEMP}/${DIS}_LP_positionID | cut -d" " -f1) SNPs remaining after filtering for ${DIS}-associated genes" >> ${TEMP}/${DIS}_log
   echo ""
 
   echo "Extracting SNPs present in the WES-data"
   ## Overlap with WES
-  ${OVERLAP} ${DIR}/${DIS}_LP_positionID 2 ${DIR}/ukb_SNP_ID_WES_chrALL.txt 2 | cut -d' ' -f1 | sort -u >  ${DIR}/${DIS}_overlap_LP_WES_SNPs.txt
-  sed 's/:/ /g5' ${DIR}/ukb_SNP_ID_WES_chrALL.txt > ${DIR}/ukb_SNP_ID_WES_chrALL.txt_position # replace ":" between position and ref to space
-  sed 's/:/ /g2' ${DIR}/${DIS}_LP_positionID | awk '{print $1, $4 ":" $5}' > ${DIR}/${DIS}_LP_positionID_position
-  ${OVERLAP} ${DIR}/${DIS}_LP_positionID_position 2 ${DIR}/ukb_SNP_ID_WES_chrALL.txt_position 2 | sort -u > ${DIR}/${DIS}_overlap_LP_WES_SNPs.txt_position # get overlap by position
+  ${OVERLAP} ${TEMP}/${DIS}_LP_positionID 2 data/raw/ukb_SNP_ID_WES_chrALL.txt 2 | cut -d' ' -f1 | sort -u >  ${DIR}/${DIS}_overlap_LP_WES_SNPs.txt
+  sed 's/:/ /g5' data/raw/ukb_SNP_ID_WES_chrALL.txt > data/raw/ukb_SNP_ID_WES_chrALL.txt_position # replace ":" between position and ref to space
+  sed 's/:/ /g2' ${TEMP}/${DIS}_LP_positionID | awk '{print $1, $4 ":" $5}' > ${TEMP}/${DIS}_LP_positionID_position
+  ${OVERLAP} ${TEMP}/${DIS}_LP_positionID_position 2 data/raw/ukb_SNP_ID_WES_chrALL.txt_position 2 | sort -u > ${TEMP}/${DIS}_overlap_LP_WES_SNPs.txt_position # get overlap by position
+
+  cat ${TEMP}/${DIS}_log >> ${LOG}
 
   echo ""
   echo "Finished! Ciao!"

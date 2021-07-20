@@ -87,6 +87,7 @@ else
   ROOT="$1"
   cd ${ROOT}
   INDEL=${3:-no}
+  DATE=$(date +'%d-%m-%Y')
 
   ### TOOLS
   SCRIPT="${ROOT}/src"
@@ -109,7 +110,7 @@ else
   if [[ ! -d ${ROOT}/logs/ ]]; then
     mkdir -v ${ROOT}/logs/
   fi
-  LOG="${ROOT}/logs"
+  LOGS="${ROOT}/logs"
   if [[ ! -d ${ROOT}/data/temp/temp ]]; then
     mkdir -v ${ROOT}/data/temp/temp
   fi
@@ -122,7 +123,7 @@ else
   echo "UKB WES genetic data: ________________________ [ ${UKB_200K_WES} ]"
   echo "UKB WES fam-directory: _______________________ [ ${UKB_200K_WES_FAM} ]"
   echo "Output directory: ____________________________ [ ${OUTPUT} ]"
-  echo "Log-file directory: __________________________ [ ${LOG} ]"
+  echo "Log-file directory: __________________________ [ ${LOGS} ]"
   echo "Temporary directory: _________________________ [ ${TEMP} ]"
   echo ""
   echo "The following software will be used:"
@@ -141,20 +142,21 @@ else
   echo "Other options/input:"
   echo "Prefix of output: ____________________________ [ ${OUTPUT_FILE_NAME} ]"
   echo ""
-
+  LOG="${LOGS}/${DATE}_MCM.log"
+  echo "Log file created: ${LOG}"
 
   if [[ ! -e ${OUTPUT}/${OUTPUT_FILE_NAME}_ukb_phenotypes.tab ]]; then
     echo "Extracting the desired phenotypes from the full UKB-phenotype file"
-    DEP1=$(sbatch --output="${LOG}/UKBioPick.log" ${SCRIPT}/run_UKBioPick.sh ${INPUT_TAB_FILE} ${INPUT_FIELD_ID} ${OUTPUT} ${OUTPUT_FILE_NAME} --time=01:00:00 --mem 100G | sed 's/Submitted batch job //')
+    DEP1=$(sbatch --output="${LOGS}/UKBioPick.log" ${SCRIPT}/run_UKBioPick.sh ${INPUT_TAB_FILE} ${INPUT_FIELD_ID} ${OUTPUT} ${OUTPUT_FILE_NAME} --time=01:00:00 --mem 100G | sed 's/Submitted batch job //')
     echo ""
   else
     echoerror "Phenotype file ${OUTPUT}/${OUTPUT_FILE_NAME}_ukb_phenotypes.tab already exists. Continuing with this file. Hope that's ok!"
   fi
 
   echo "Compiling list of SNPs from ClinVar and VKGL per phenotype"
-  DEP2a=$(sbatch --output="${LOG}/prep_SNPs.log" ${SCRIPT}/prep_SNPs.sh ACM ACM_Clinvar_result_LP.txt ACM_VKGL.txt --time=30:00 | sed 's/Submitted batch job //')
-  DEP2d=$(sbatch --output="${LOG}/prep_SNPs.log" ${SCRIPT}/prep_SNPs.sh DCM DCM_Clinvar_result_LP.txt DCM_VKGL.txt --time=30:00 | sed 's/Submitted batch job //')
-  DEP2h=$(sbatch --output="${LOG}/prep_SNPs.log" ${SCRIPT}/prep_SNPs.sh HCM HCM_Clinvar_result_LP.txt HCM_VKGL.txt --time=30:00 | sed 's/Submitted batch job //')
+  DEP2a=$(sbatch --output="${LOGS}/ACM_prep_SNPs.log" ${SCRIPT}/prep_SNPs.sh ACM data/raw/ACM_Clinvar_result_LP.txt data/raw/ACM_VKGL.txt --time=30:00 | sed 's/Submitted batch job //')
+  DEP2d=$(sbatch --output="${LOGS}/DCM_prep_SNPs.log" ${SCRIPT}/prep_SNPs.sh DCM data/raw/DCM_Clinvar_result_LP.txt data/raw/DCM_VKGL.txt --time=30:00 | sed 's/Submitted batch job //')
+  DEP2h=$(sbatch --output="${LOGS}/HCM_prep_SNPs.log" ${SCRIPT}/prep_SNPs.sh HCM data/raw/HCM_Clinvar_result_LP.txt data/raw/HCM_VKGL.txt --time=30:00 | sed 's/Submitted batch job //')
   echo ""
   if [[ ${INDEL} == "no" ]]; then
     echobold "No file with overlapping indels provided, exiting now to make it manually or provide it"
@@ -162,25 +164,20 @@ else
   fi
 
   echo "Extracting participants carrying (likely) pathogenic mutations"
-  DEP3a=$(sbatch --dependency=afterok:${DEP2a} --output="${LOG}/ACM_extract_IID.log" ${SCRIPT}/extract_IID.sh ACM ${INDEL} --time=01:00:00 --mem 40G | sed 's/Submitted batch job //')
-  DEP3d=$(sbatch --dependency=afterok:${DEP2d} --output="${LOG}/DCM_extract_IID.log" ${SCRIPT}/extract_IID.sh DCM ${INDEL} --time=01:00:00 --mem 40G | sed 's/Submitted batch job //')
-  DEP3h=$(sbatch --dependency=afterok:${DEP2h} --output="${LOG}/HCM_extract_IID.log" ${SCRIPT}/extract_IID.sh HCM ${INDEL} --time=01:00:00 --mem 40G | sed 's/Submitted batch job //')
-  echo ""
-  echo "Making a nice file with the individuals and their variant information"
-  DEP4a=$(sbatch --dependency=afterok:${DEP3a} --output="${LOG}/ACM_extract_IID.Rlog" --wrap="Rscript --vanilla ${SCRIPT}/Extract_IID_WES_UKB.R ${TEMP}/ACM_ExtractIID_beforeDennis.txt ${DIR}/ACM_ExtractIID_genes.txt ${DIR}/ACM_genes.txt ${DIR}/ACM_IIDs_genes_variants.txt")
-  DEP4d=$(sbatch --dependency=afterok:${DEP3d} --output="${LOG}/DCM_extract_IID.Rlog" --wrap="Rscript --vanilla ${SCRIPT}/Extract_IID_WES_UKB.R ${TEMP}/DCM_ExtractIID_beforeDennis.txt ${DIR}/DCM_ExtractIID_genes.txt ${DIR}/DCM_genes.txt ${DIR}/DCM_IIDs_genes_variants.txt")
-  DEP4h=$(sbatch --dependency=afterok:${DEP3h} --output="${LOG}/HCM_extract_IID.Rlog" --wrap="Rscript --vanilla ${SCRIPT}/Extract_IID_WES_UKB.R ${TEMP}/HCM_ExtractIID_beforeDennis.txt ${DIR}/HCM_ExtractIID_genes.txt ${DIR}/HCM_genes.txt ${DIR}/HCM_IIDs_genes_variants.txt")
+  DEP3a=$(sbatch --dependency=afterok:${DEP2a} --output="${LOGS}/ACM_extract_IID.log" ${SCRIPT}/extract_IID.sh ACM ${INDEL} ${LOG} --time=01:00:00 --mem 40G | sed 's/Submitted batch job //')
+  DEP3d=$(sbatch --dependency=afterok:${DEP2d} --output="${LOGS}/DCM_extract_IID.log" ${SCRIPT}/extract_IID.sh DCM ${INDEL} ${LOG} --time=01:00:00 --mem 40G | sed 's/Submitted batch job //')
+  DEP3h=$(sbatch --dependency=afterok:${DEP2h} --output="${LOGS}/HCM_extract_IID.log" ${SCRIPT}/extract_IID.sh HCM ${INDEL} ${LOG} --time=01:00:00 --mem 40G | sed 's/Submitted batch job //')
   echo ""
   echo "Preparing full phenotype file"
-  DEP5a=$(sbatch --dependency=afterok:${DEP4a} --output="${LOG}/ACM_phenish.log" ${SCRIPT}/phenish.sh ACM full.txt --time=01:30:00 --mem 100G | sed 's/Submitted batch job //')
-  DEP5d=$(sbatch --dependency=afterok:${DEP4d} --output="${LOG}/DCM_phenish.log" ${SCRIPT}/phenish.sh DCM full.txt --time=01:30:00 --mem 100G | sed 's/Submitted batch job //')
-  DEP5h=$(sbatch --dependency=afterok:${DEP4h} --output="${LOG}/HCM_phenish.log" ${SCRIPT}/phenish.sh HCM full.txt --time=01:30:00 --mem 100G | sed 's/Submitted batch job //')
+  DEP5a=$(sbatch --dependency=afterok:${DEP3a} --output="${LOGS}/ACM_phenish.log" ${SCRIPT}/phenish.sh ACM full.txt --time=01:30:00 --mem 100G | sed 's/Submitted batch job //')
+  DEP5d=$(sbatch --dependency=afterok:${DEP3d} --output="${LOGS}/DCM_phenish.log" ${SCRIPT}/phenish.sh DCM full.txt --time=01:30:00 --mem 100G | sed 's/Submitted batch job //')
+  DEP5h=$(sbatch --dependency=afterok:${DEP3h} --output="${LOGS}/HCM_phenish.log" ${SCRIPT}/phenish.sh HCM full.txt --time=01:30:00 --mem 100G | sed 's/Submitted batch job //')
   echo ""
   echo "Getting randomly matched IDs for the controls"
-  DEP6=$(sbatch --dependency=afterok:${DEP5a},${DEP5d},${DEP5h} --output="${LOG}/match_controls.Rlog" --wrap="Rscript --vanilla Match_controls.R data/raw _full.txt results/figures/UKB_MCM_Summary.pptx" --time=30:00)
+  DEP6=$(sbatch --dependency=afterok:${DEP5a},${DEP5d},${DEP5h} --output="${LOGS}/match_controls.Rlog" --wrap="Rscript --vanilla Match_controls.R data/raw _full.txt results/figures/UKB_MCM_Summary.pptx" --time=30:00)
   echo ""
   echo "Combining and cleaning up phenotypes"
-  DEP7=$(sbatch --dependency=afterok:${DEP6} --output="${LOG}/clean_pheno.log" ${SCRIPT}/clean_pheno.sh)
+  DEP7=$(sbatch --dependency=afterok:${DEP6} --output="${LOGS}/clean_pheno.log" ${SCRIPT}/clean_pheno.sh)
 
 
 fi

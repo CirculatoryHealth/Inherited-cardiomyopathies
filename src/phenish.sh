@@ -70,30 +70,41 @@ script_copyright_message() {
 script_arguments_error() {
 	echoerror "$1" # ERROR MESSAGE
   echoerror "- Argument #1   --  Disease to perform analysis for, could be 'DCM'"
-  echoerror "- Argument #2   --  Suffix of the output file, could be 'DCM'"
+  echoerror "- Argument #2   --  Phenotype file with only desired phenotypes, could be '/hpc/dhl_ec/mvanvugt/UKBB/Inherited-cardiomyopathies/data/raw/MCM_ukb_phenotypes.tab'"
+  echoerror "- Argument #3   --  Suffix of the output file, could be 'full.tsv'"
 	echoerror ""
-	echoerror "An example command would be: phenish.sh [arg1: DCM]."
+	echoerror "An example command would be: phenish.sh [arg1: DCM] [arg2: /hpc/dhl_ec/mvanvugt/UKBB/Inherited-cardiomyopathies/data/raw/MCM_ukb_phenotypes.tab] [arg3: full.txt]."
 	echoerror "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   	# The wrong arguments are passed, so we'll exit the script now!
   	exit 1
 }
 
-if [[ $# -lt 2 ]]; then
+if [[ $# -lt 3 ]]; then
   echo "Error, number of arguments found "$#"."
-  script_arguments_error "You must supply [1] correct arguments when running this script"
+  script_arguments_error "You must supply [3] correct arguments when running this script"
 
 else
 
   DIS="$1"      ### Disease (DCM/HCM/ACM)
-  SUF="$2"
+  PHENO="$2"
+  SUF="$3"
   DIR="data/temp"
   OUT="data/raw"
   TEMP="data/temp/temp"
 
-  sed 's/X//g' ${DIR}/${DIS}_IIDs_genes_variants.txt | sed 's/\./:/g' | sed 's/ /\t/g' | sed 's/ID/f.eid/' > ${TEMP}/${DIS}_IIDs_genes.tsv
+  sed 's/X//g' ${TEMP}/${DIS}_IIDs_genes_variants.txt | sed 's/\./:/g' | sed 's/ /\t/g' | sed 's/ID/f.eid/' > ${TEMP}/${DIS}_IIDs_genes.tsv
 
   echo "Last but not least, let's merge with the desired phenotypes"
-  ${MERGE} --file1 ${DIR}/WES_MRI_MCM_phenotypes.txt --file2 ${TEMP}/${DIS}_IIDs_genes.tsv --index f.eid > ${OUT}/${DIS}_${SUF}
+  # Replace spaces to prevent delimiter problems
+  sed -i 's/ /_/g' ${PHENO}
+
+  # Extract only WES-individuals
+  awk 'FNR==NR{a[$1];next}($1 in a){print}' ${DIR}/WES_IDs.txt ${PHENO} > ${TEMP}/WES_MCM_phenotypes.tab
+
+  # Merge with CMR-data
+  ${MERGE} --file1 ${DIR}/CMR_complete_data.txt --file2 ${TEMP}/WES_MCM_phenotypes.tab --index f.eid > ${TEMP}/WES_MRI_MCM_phenotypes.txt
+
+  ${MERGE} --file1 ${TEMP}/WES_MRI_MCM_phenotypes.txt --file2 ${TEMP}/${DIS}_IIDs_genes.tsv --index f.eid | sed 's/ /\t/g' > ${OUT}/${DIS}_${SUF}
 
   echo "Have a great day!"
 fi

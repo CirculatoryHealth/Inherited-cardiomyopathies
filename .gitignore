@@ -5,6 +5,7 @@ data/temp/*
 *~
 plotly*
 core*
+*.txt_*
 
 # R files
 .Rproj.user
@@ -20,7 +21,9 @@ core*
 *.html
 *sv
 data/processed/*
+data/raw/ukb_SNP_ID_WES_chrALL.txt
 
 # Log files
 *log
 *out
+logs/*
