@@ -20,15 +20,15 @@ options(scipen = 6, digits = 4) # view outputs in non-scientific notation
 ## Loading arguments --------------------------
 
 # Arguments expected:
-#     #1 -- Path to and name of the phenotype file, 
+#     #1 -- Path to and name of the phenotype file,
 #           for example /hpc/dhl_ec/mvanvugt/UKBB/Project1_ukb_phenotypes.tab
-#     #2 -- Directory to the helper files, 
+#     #2 -- Directory to the helper files,
 #           for example /hpc/dhl_ec/mvanvugt/Software/UKB-pipeline-Utrecht
 #     #3 -- Output directory, for example /hpc/dhl_ec/mvanvugt/UKBB
 #     #4 -- Prefix of the output files
 
 args = commandArgs(trailingOnly = TRUE)
-input = args[1] # "Data/processed/MCM_final_pheno.txt"
+input = args[1] # "data/processed/MCM_final_pheno.txt"
 # output = args[3] # "results/output/"
 # prefix = args[4] # "MCM"
 
@@ -36,7 +36,7 @@ input = args[1] # "Data/processed/MCM_final_pheno.txt"
 ## Loading functions ---------------------------
 
 library(plyr)
-source("src/functions.R") 
+source("src/functions.R")
 
 
 ## Loading packages ---------------------------
@@ -45,13 +45,15 @@ library(data.table)
 library(dplyr)
 library(ggpubr)
 library(viridis)
+library(tableone)
 
 
 # Loading Data ------------------------------------------------------------
 
 message("Loading data")
-df <- data.table(readRDS(input))
+df <- data.table(read.delim(input, header = TRUE, sep = " ", stringsAsFactors = FALSE))
 lof <- readRDS("data/processed/MCM_gene_summary.rds")
+df$CM <- as.factor(df$CM)
 
 
 # Prevalence --------------------------------------------------------------
@@ -60,9 +62,9 @@ message("Calculating prevalence")
 prev <- data.table()
 for (cm in levels(df$CM)) {
   if (cm != "Controls") {
-    
+
     f <- subset(df, CM == cm)
-    tmp <- perc_var(f, c("Gene_1", "Gene_2")) %>% 
+    tmp <- perc_var(f, c("Gene_1", "Gene_2")) %>%
       na.omit() %>%
       mutate(perc = count / 200643)
     if (cm == "HCM") {
@@ -85,11 +87,11 @@ for (cm in levels(df$CM)) {
       arrange(desc(Gene)) %>%
       mutate(prop = N / sum(tmp$N) * 100) %>%
       mutate(ypos = cumsum(prop) - 0.5 * prop)
-    
+
     source("src/Piechart_genes.R")
-    
+
   }
-} 
+}
 write.table(prev, "results/output/Prevalence.tsv", sep = "\t", quote = FALSE,
             row.names = FALSE)
 rm(cm, f, tmp, new, dup, m, pie, prev)
@@ -103,7 +105,7 @@ test <- list()
 pval <- data.frame(Phenotype = cvd)
 for (cm in levels(df$CM)) {
   if (cm != "Controls") {
-    
+
     f <- df %>% select(any_of(cvd), CM) %>% filter(CM %in% c(cm,  "Controls"))
     f$CM <- droplevels(f$CM)
     ps <- vector()
@@ -111,26 +113,26 @@ for (cm in levels(df$CM)) {
       tmp <- f %>% dplyr::select(any_of(x), CM)
       test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
       ps <- c(ps, test[[x]]$p.value)
-      write.table(table(tmp), "results/output/CVD_enrichment_XTab.tsv", 
+      write.table(table(tmp), "results/output/CVD_enrichment_XTab.tsv",
                   sep = "\t", quote = FALSE, append = TRUE,
                   col.names = c(x, paste("Controls", cm, sep = "_")))
     }
     pval <- cbind(pval, ps)
     names(pval)[ncol(pval)] <- cm
-    
+
   }
 }
-write.table(pval, "results/output/CVD_enrichment_fisher.tsv", sep = "\t", 
+write.table(pval, "results/output/CVD_enrichment_fisher.tsv", sep = "\t",
             quote = FALSE, row.names = FALSE)
 rm(test, pval, f, ps, cm, tmp, x)
 
 
 # Other statistics --------------------------------------------------------
 
-cmr <- df %>% select(starts_with("RV"), starts_with("LV")) %>% 
+cmr <- df %>% select(starts_with("RV"), starts_with("LV")) %>%
   select(!c(LV, RV)) %>% names()
-ecg <- c("ECG_heart_rate.0_mean", "P_duration", "P_axis.2.0", 
-         "PQ_interval.2.0", "QRS_duration", "R_axis.2.0", 
+ecg <- c("ECG_heart_rate.0_mean", "P_duration", "P_axis.2.0",
+         "PQ_interval.2.0", "QRS_duration", "R_axis.2.0",
          "QTC_interval.2.0", "T_axis.2.0")
 met <- df %>% select(starts_with("MET")) %>% names()
 bp <- df %>% select(Total_Cholesterol, HDL, LDL,
@@ -141,8 +143,8 @@ test <- list()
 pval <- data.frame(Phenotype = cols)
 for (cm in levels(df$CM)) {
   if (cm != "Controls") {
-    
-    f <- df %>% select(CM, any_of(cols)) %>% 
+
+    f <- df %>% select(CM, any_of(cols)) %>%
       filter(CM %in% c(cm,  "Controls")) %>% as.data.frame()
     f$CM <- droplevels(f$CM)
     ps <- vector()
@@ -160,20 +162,20 @@ for (cm in levels(df$CM)) {
     names(pval)[ncol(pval)] <- paste0(cm, "_P")
     pval <- cbind(pval, sta)
     names(pval)[ncol(pval)] <- paste0(cm, "_statistic")
-    
+
   } # End check CM-group
 } # End iteration CMs
-write.table(pval, "results/output/Differences_Continuous_Wilcox.tsv", 
+write.table(pval, "results/output/Differences_Continuous_Wilcox.tsv",
             sep = "\t", quote = FALSE, row.names = FALSE)
 rm(cols, cvd, test, pval, f, ps, cm, x, tmp, ref, cmr, ecg, met, bp, sta)
 
 
 # Filtering CM/HF diagnosed -----------------------------------------------
 
-cms <- c("Heart_Failure_sum", "Cardiomyopathy_sum", "DCM_sum", "HCM_sum", 
+cms <- c("Heart_Failure_sum", "Cardiomyopathy_sum", "DCM_sum", "HCM_sum",
          "Ventricular_arrhythmias_sum", "Cardiac_arrest_sum")
-ecg <- c("ECG_heart_rate.0_mean", "P_duration", "P_axis.2.0", 
-         "PQ_interval.2.0", "QRS_duration", "R_axis.2.0", 
+ecg <- c("ECG_heart_rate.0_mean", "P_duration", "P_axis.2.0",
+         "PQ_interval.2.0", "QRS_duration", "R_axis.2.0",
          "QTC_interval.2.0", "T_axis.2.0")
 
 d <- df %>% select(f.eid, all_of(cms))
@@ -228,10 +230,10 @@ new[is.na(new)] <- "No"
 new[2:ncol(new)] <- lapply(new[2:ncol(new)], as.factor)
 cols <- names(new)[3:ncol(new)]
 
-tab1 <- CreateTableOne(vars = cols, data = new, factorVars = cols, 
+tab1 <- CreateTableOne(vars = cols, data = new, factorVars = cols,
                        strata = "CM", addOverall = FALSE)
 
-ex1 <- print(tab1, showAllLevels = FALSE, formatOptions = list(big.mark = ","), 
+ex1 <- print(tab1, showAllLevels = FALSE, formatOptions = list(big.mark = ","),
              quote = FALSE, noSpaces = TRUE, printToggle = FALSE)
 
 write.csv(ex1, "results/output/LoF_Table.csv")
