@@ -26,3 +26,6 @@ cut -f1,${GNS} data/temp/MCM_LoF_genes_transposed.txt | tail -n +2 > data/temp/M
 sed -i 's/gene_symbol/f.eid/' data/temp/MCM_LoF_genes.txt
 
 rm data/temp/LoF_genes.txt data/temp/LoF_genes_only.txt data/temp/MCM_LoF_genes_transposed.txt
+
+cat data/temp/ACM_overlap_LP_WES_SNPs_updated.txt data/temp/DCM_overlap_LP_WES_SNPs_updated.txt data/temp/HCM_overlap_LP_WES_SNPs_updated.txt > data/temp/CM_incl_SNPs.txt
+bin/overlap.pl data/temp/CM_incl_SNPs.txt 1 data/temp/LoF_snps.txt 2 > data/temp/overlap_LoF

@@ -27,11 +27,12 @@ options(scipen = 6, digits = 4) # view outputs in non-scientific notation
 #           for example /hpc/dhl_ec/mvanvugt/Software/UKB-pipeline-Utrecht
 #     #3 -- Output directory, for example /hpc/dhl_ec/mvanvugt/UKBB
 #     #4 -- Prefix of the output files
+rm(list=ls())
 
 args = commandArgs(trailingOnly = TRUE)
-path = args[1] # "data/temp"
+path = args[1] # "data/raw"
 suffix = args[2] # "_full.tsv"
-figs = args[3] # "Results/figures/UKB_MCM_Summary.pptx"
+figs = args[3] # "results/figures/UKB_MCM_Summary.pptx"
 
 
 ## Loading packages ---------------------------
@@ -41,24 +42,23 @@ library(viridis)
 
 ## Loading functions ---------------------------
 
-rm(list=setdiff(ls(), "all"))
-rm(list=ls())
 source("src/functions.R")
 
 
 # Loading data ------------------------------------------------------------
 
 dfs <- list()
-dfs$hcm <- readr::read_delim(paste0(path, "/HCM", suffix), "\t", escape_double = FALSE, trim_ws = TRUE)
-dfs$dcm <- readr::read_delim(paste0(path, "/DCM", suffix), "\t", escape_double = FALSE, trim_ws = TRUE)
 dfs$acm <- readr::read_delim(paste0(path, "/ACM", suffix), "\t", escape_double = FALSE, trim_ws = TRUE)
+dfs$dcm <- readr::read_delim(paste0(path, "/DCM", suffix), "\t", escape_double = FALSE, trim_ws = TRUE)
+dfs$hcm <- readr::read_delim(paste0(path, "/HCM", suffix), "\t", escape_double = FALSE, trim_ws = TRUE)
 
 PptPath <- figs
 mul <- 4 # Number of controls to be picked per case
 
-wes <- read.table(paste0(path, "/MCM_WES_pheno.tsv"), header = TRUE,
+wes <- read.table(paste0("data/temp/MCM_WES_pheno.tsv"), header = TRUE,
                   stringsAsFactors = FALSE)
-mri <- read.table(paste0(path, "/CMR_IDs.txt"), header = TRUE,
+wes$f.eid <- as.character(wes$f.eid)
+mri <- read.table(paste0("data/temp/CMR_IDs.txt"), header = TRUE,
                   stringsAsFactors = FALSE)
 
 # Filter out cases
@@ -171,7 +171,7 @@ for (q in 1:length(dfs)) {
     scale_fill_manual(name = "Sex", labels = c("Female", "Male"),
                       values = c("palevioletred1", "skyblue1")) +
     my_theme()
-  ggsave(paste0("Results/figures/Bar_sex_all_",
+  ggsave(paste0("results/figures/Bar_sex_all_",
                 toupper(cm), ".png"),
          plot = p)
   create_pptx(p, PptPath)
@@ -187,7 +187,7 @@ for (q in 1:length(dfs)) {
               position = position_dodge(width = 0.7)) +
     scale_fill_viridis(discrete = TRUE, name = "Ethnic group") +
     my_theme()
-  ggsave(paste0("Results/figures/Bar_ethnic_all_",
+  ggsave(paste0("results/figures/Bar_ethnic_all_",
                 toupper(cm), ".png"),
          plot = p)
   create_pptx(p, PptPath)
@@ -202,7 +202,7 @@ for (q in 1:length(dfs)) {
     labs(x = "Age (in years)", y = "Percentage") +
     ggtitle(paste0("Age at recruitment - MRI ", toupper(cm))) +
     my_theme()
-  ggsave(paste0("Results/figures/Histogram_age_sex_MRI_",
+  ggsave(paste0("results/figures/Histogram_age_sex_MRI_",
                 toupper(cm), ".png"),
          plot = p)
   create_pptx(p, PptPath)
@@ -217,7 +217,7 @@ for (q in 1:length(dfs)) {
     labs(x = "Age (in years)", y = "Percentage") +
     ggtitle(paste0("Age at recruitment - nonMRI ", toupper(cm))) +
     my_theme()
-  ggsave(paste0("Results/figures/Histogram_age_sex_nonMRI_",
+  ggsave(paste0("results/figures/Histogram_age_sex_nonMRI_",
                 toupper(cm), ".png"),
          plot = p)
   create_pptx(p, PptPath)
@@ -232,7 +232,7 @@ for (q in 1:length(dfs)) {
     labs(x = "Age (in years)", y = "Percentage") +
     ggtitle(paste0("Age at recruitment - all ", toupper(cm))) +
     my_theme()
-  ggsave(paste0("Results/figures/Histogram_age_sex_all_",
+  ggsave(paste0("results/figures/Histogram_age_sex_all_",
                 toupper(cm), ".png"),
          plot = p)
   create_pptx(p, PptPath)
