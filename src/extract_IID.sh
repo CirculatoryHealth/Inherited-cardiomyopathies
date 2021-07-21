@@ -163,8 +163,16 @@ else
     tail -n +8 ${TEMP}/${DIS}_WES_MRI_UKB_chr${CHR}.vcf >> ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.vcf
   done
 
+  echo "Making list of genes per SNP"
+  awk '$1 !~ /^##/' ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.vcf > ${TEMP}/${DIS}_chrALL.vcf
+  echo "ID Gene" > ${TEMP}/${DIS}_sng_temp
+  tail -n +2 ${TEMP}/${DIS}_LP_positionID | awk '{print $2, $4}' >> ${TEMP}/${DIS}_sng_temp
+  cat ${INDEL} >> ${TEMP}/${DIS}_sng_temp
+  bin/overlap.pl ${TEMP}/${DIS}_chrALL.vcf 3 ${TEMP}/${DIS}_sng_temp 1 | sort -ur > ${TEMP}/snp_gen
+  bin/merge_tables.pl --file1 ${TEMP}/${DIS}_chrALL.vcf --file2 ${TEMP}/snp_gen --index ID | sed 's/ /\t/g' | cut -f1,2,11- > ${TEMP}/${DIS}_gene.vcf
+
   echo "Transposing vcf-file so header are SNPs and rows are individuals"
-  tail -n +7 ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.vcf  | cut -f3,10- | bin/transpose_perl.pl > ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.transpose
+  cat ${TEMP}/${DIS}_gene.vcf | bin/transpose_perl.pl > ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.transpose
 
   # Get number of lines
   NUM=`awk 'NR == 1 {print NF}' ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.transpose`
@@ -187,13 +195,6 @@ else
       bin/merge_tables.pl --file1 ${TEMP}/${DIS}_SNP${SNP}_ID.txt --file2 ${TEMP}/${DIS}_merge${MIN} --index ID > ${TEMP}/${DIS}_merge${SNP}
     fi
   done
-
-  echo "Making list of genes per SNP"
-  head -1 ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.transpose | bin/transpose_perl.pl > ${TEMP}/${DIS}_snps_temp
-  echo "ID Gene" > ${TEMP}/${DIS}_sng_temp
-  tail -n +2 ${TEMP}/${DIS}_LP_positionID | awk '{print $2, $4}' >> ${TEMP}/${DIS}_sng_temp
-  cat ${INDEL} >> ${TEMP}/${DIS}_sng_temp
-  bin/merge_tables.pl --file1 ${TEMP}/${DIS}_sng_temp --file2 ${TEMP}/${DIS}_snps_temp --index ID | awk '{print $2}' > ${TEMP}/${DIS}_genes
 
   sed 's/0\///g' ${TEMP}/${DIS}_merge${NUM} | sed 's/NA/0/g' | sed 's/ /\t/g' > ${TEMP}/${DIS}_mutation_carriers_all.txt
   bin/transpose_perl.pl ${TEMP}/${DIS}_genes > ${TEMP}/${DIS}_genes.transpose

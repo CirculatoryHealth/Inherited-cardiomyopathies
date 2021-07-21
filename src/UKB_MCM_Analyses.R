@@ -51,7 +51,7 @@ library(tableone)
 # Loading Data ------------------------------------------------------------
 
 message("Loading data")
-df <- data.table(read.delim(input, header = TRUE, sep = " ", stringsAsFactors = FALSE))
+df <- data.table(read.delim(input, header = TRUE, sep = "\t", stringsAsFactors = FALSE))
 lof <- readRDS("data/processed/MCM_gene_summary.rds")
 df$CM <- as.factor(df$CM)
 
@@ -64,20 +64,20 @@ for (cm in levels(df$CM)) {
   if (cm != "Controls") {
 
     f <- subset(df, CM == cm)
-    tmp <- perc_var(f, c("Gene_1", "Gene_2")) %>%
+    tmp <- perc_var(f, c("Gene_1")) %>%
       na.omit() %>%
       mutate(perc = count / 200643)
-    if (cm == "HCM") {
-      dup <- tmp %>% filter(value == "MYH7")
-      tmp <- tmp %>% filter(value != "MYH7")
-      new <- c("MYH7", sum(dup$count), sum(dup$perc), "Gene")
-      tmp <- rbind(tmp, new)
-    } else if (cm == "DCM") {
-      dup <- tmp %>% filter(value == "TNNI3")
-      tmp <- tmp %>% filter(value != "TNNI3")
-      new <- c("TNNI3", sum(dup$count), sum(dup$perc), "Gene")
-      tmp <- rbind(tmp, new)
-    } # End ifelse loop adding genes that occur twice
+    # if (cm == "HCM") {
+    #   dup <- tmp %>% filter(value == "MYH7")
+    #   tmp <- tmp %>% filter(value != "MYH7")
+    #   new <- c("MYH7", sum(dup$count), sum(dup$perc), "Gene")
+    #   tmp <- rbind(tmp, new)
+    # } else if (cm == "DCM") {
+    #   dup <- tmp %>% filter(value == "TNNI3")
+    #   tmp <- tmp %>% filter(value != "TNNI3")
+    #   new <- c("TNNI3", sum(dup$count), sum(dup$perc), "Gene")
+    #   tmp <- rbind(tmp, new)
+    # } # End ifelse loop adding genes that occur twice
     tmp$name <- cm
     names(tmp) <- c("Gene", "N", "Prevalence_WES_UKB", "CM")
     tmp$N <- as.numeric(tmp$N)
