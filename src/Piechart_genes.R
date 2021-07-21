@@ -1,6 +1,6 @@
 library(plotly)
 
-m <- list(l = 50, r = 50, b = 200, t = 100, pad = 4)
+m <- list(l = 50, r = 50, b = 300, t = 100, pad = 4)
 
 pie <- plot_ly(tmp, 
                labels = paste0(tmp$Gene, "\n", tmp$N, " (", round(tmp$prop), "%)"),
