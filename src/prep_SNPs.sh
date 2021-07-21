@@ -93,10 +93,13 @@ else
   DIR="data/temp"
   OVERLAP="bin/overlap.pl"
 
-  if [[ ! -d ${DIR}/temp ]]; then
-    mkdir -v ${DIR}/temp
+  if [[ ! -d ${DIR}/${DIS}_temp ]]; then
+    mkdir -v ${DIR}/${DIS}_temp
+  else
+    echo "Temporary folder already exists, emptying it now"
+    rm ${DIR}/${DIS}_temp/*
   fi
-  TEMP="${DIR}/temp"
+  TEMP="${DIR}/${DIS}_temp"
 
   echo ""
   echo "Settings for this script:"
@@ -152,7 +155,7 @@ else
   ${OVERLAP} ${TEMP}/${DIS}_LP_positionID_position 2 data/raw/ukb_SNP_ID_WES_chrALL.txt_position 2 | sort -u > ${TEMP}/${DIS}_overlap_LP_WES_SNPs.txt_position # get overlap by position
   echo "" >> ${TEMP}/${DIS}_log
   cat ${TEMP}/${DIS}_log >> ${LOG}
-
+  rm ${TEMP}/${DIS}_log
   echo ""
   echo "Finished! Ciao!"
 

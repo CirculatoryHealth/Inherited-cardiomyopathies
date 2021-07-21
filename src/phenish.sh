@@ -90,7 +90,7 @@ else
   SUF="$3"
   DIR="data/temp"
   OUT="data/raw"
-  TEMP="data/temp/temp"
+  TEMP="data/temp/${DIS}_temp"
 
   sed 's/ /\t/g' ${TEMP}/${DIS}_IIDs_genes_variants.txt | sed 's/ID/f.eid/' > ${TEMP}/${DIS}_IIDs_genes.tsv
 
@@ -102,9 +102,9 @@ else
   awk 'FNR==NR{a[$1];next}($1 in a){print}' ${DIR}/WES_IDs.txt ${PHENO} > ${TEMP}/WES_MCM_phenotypes.tab
 
   # Merge with CMR-data
-  ${MERGE} --file1 ${DIR}/CMR_complete_data.txt --file2 ${TEMP}/WES_MCM_phenotypes.tab --index f.eid > ${TEMP}/WES_MRI_MCM_phenotypes.txt
+  bin/merge_tables.pl --file1 ${DIR}/CMR_complete_data.txt --file2 ${TEMP}/WES_MCM_phenotypes.tab --index f.eid > ${TEMP}/WES_MRI_MCM_phenotypes.txt
 
-  ${MERGE} --file1 ${TEMP}/WES_MRI_MCM_phenotypes.txt --file2 ${TEMP}/${DIS}_IIDs_genes.tsv --index f.eid | sed 's/ /\t/g' > ${OUT}/${DIS}_${SUF}
+  bin/merge_tables.pl --file1 ${TEMP}/WES_MRI_MCM_phenotypes.txt --file2 ${TEMP}/${DIS}_IIDs_genes.tsv --index f.eid | sed 's/ /\t/g' > ${OUT}/${DIS}_${SUF}
 
   echo "Have a great day!"
 fi

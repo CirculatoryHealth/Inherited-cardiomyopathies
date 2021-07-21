@@ -91,10 +91,10 @@ else
   DIR="data/temp"
   ROOT=$(pwd)
 
-  if [[ ! -d ${DIR}/temp ]]; then
-    mkdir -v ${DIR}/temp
+  if [[ ! -d ${DIR}/${DIS}_temp ]]; then
+    mkdir -v ${DIR}/${DIS}_temp
   fi
-  TEMP="${DIR}/temp"
+  TEMP="${DIR}/${DIS}_temp"
   PLINK="/hpc/local/CentOS7/dhl_ec/software/plink_v1.9"
   UKB_200K_WES="/hpc/ukbiobank/WES_200K_2020"
   UKB_200K_WES_FAM='/hpc/dhl_ec/data/ukbiobank/WES_200K_2020'
@@ -106,6 +106,7 @@ else
   echo "Directory: __________________ [ ${DIR} ]"
   echo "Indel file: _________________ [ ${INDEL} ]"
   echo "Temporary directory: ________ [ ${TEMP} ]"
+  echo "Root directory: _____________ [ ${ROOT} ]"
 
   echo ""
 
@@ -146,6 +147,7 @@ else
   echo -e "$(wc -l ${DIR}/${DIS}_overlap_LP_WES_SNPs_updated.txt | cut -d" " -f1) SNPs to extract UKB-individuals for" >> ${TEMP}/${DIS}_log
   echo "Making vcf-files with only desired snps"
   for CHR in $(seq 1 22); do
+    rm ${TEMP}/${DIS}_WES_MRI_UKB_chr${CHR}.vcf
     echo ${CHR}
     ${PLINK} --bed ${UKB_200K_WES}/UKBexomeOQFE_200K_chr${CHR}_v1.bed \
     --bim ${UKB_200K_WES}/UKBexomeOQFE_200K_chr${CHR}_v1.bim \
@@ -170,6 +172,7 @@ else
   cat ${INDEL} >> ${TEMP}/${DIS}_sng_temp
   bin/overlap.pl ${TEMP}/${DIS}_chrALL.vcf 3 ${TEMP}/${DIS}_sng_temp 1 | sort -ur > ${TEMP}/snp_gen
   bin/merge_tables.pl --file1 ${TEMP}/${DIS}_chrALL.vcf --file2 ${TEMP}/snp_gen --index ID | sed 's/ /\t/g' | cut -f1,2,11- > ${TEMP}/${DIS}_gene.vcf
+  cut -f2 ${TEMP}/${DIS}_gene.vcf > ${TEMP}/${DIS}_genes
 
   echo "Transposing vcf-file so header are SNPs and rows are individuals"
   cat ${TEMP}/${DIS}_gene.vcf | bin/transpose_perl.pl > ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.transpose
@@ -222,6 +225,6 @@ else
   Rscript --vanilla ${ROOT}/src/Extract_IID_WES_UKB.R ${TEMP}/${DIS}_SNPs_MRI.txt ${DIR}/${DIS}_ExtractIID_genes.txt ${TEMP}/${DIS}_genes.txt ${TEMP}/${DIS}_IIDs_genes_variants.txt
 
   cat ${TEMP}/${DIS}_log >> ${LOG}
-
+  rm ${TEMP}/${DIS}_log
   echo "Thanks for using this script!"
 fi
