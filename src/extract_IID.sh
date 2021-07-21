@@ -145,6 +145,7 @@ else
   fi
 
   echo -e "$(wc -l ${DIR}/${DIS}_overlap_LP_WES_SNPs_updated.txt | cut -d" " -f1) SNPs to extract UKB-individuals for" >> ${TEMP}/${DIS}_log
+  echo "" >> ${TEMP}/${DIS}_log
   echo "Making vcf-files with only desired snps"
   for CHR in $(seq 1 22); do
     rm ${TEMP}/${DIS}_WES_MRI_UKB_chr${CHR}.vcf
@@ -200,8 +201,6 @@ else
   done
 
   sed 's/0\///g' ${TEMP}/${DIS}_merge${NUM} | sed 's/NA/0/g' | sed 's/ /\t/g' > ${TEMP}/${DIS}_mutation_carriers_all.txt
-  bin/transpose_perl.pl ${TEMP}/${DIS}_genes > ${TEMP}/${DIS}_genes.transpose
-  cat ${TEMP}/${DIS}_mutation_carriers_all.txt ${TEMP}/${DIS}_genes.transpose > ${TEMP}/${DIS}_all_mutation_carriers.txt
   echo ""
   echo "Adding columns for MRI overlap"
   echo "ID LV" > ${DIR}/ukb_MRI_LV_ID.txt
@@ -209,8 +208,9 @@ else
   awk '{print $1, "yes"}' ${DIR}/ukb_MRI_LV_IID_clean.txt >> ${DIR}/ukb_MRI_LV_ID.txt
   awk '{print $1, "yes"}' ${DIR}/ukb_MRI_RV_IID_clean.txt >> ${DIR}/ukb_MRI_RV_ID.txt
 
-  bin/merge_tables.pl --file1 ${DIR}/ukb_MRI_LV_ID.txt --file2 ${TEMP}/${DIS}_all_mutation_carriers.txt --index ID > ${TEMP}/${DIS}_lv
+  bin/merge_tables.pl --file1 ${DIR}/ukb_MRI_LV_ID.txt --file2 ${TEMP}/${DIS}_mutation_carriers_all.txt --index ID > ${TEMP}/${DIS}_lv
   bin/merge_tables.pl --file1 ${DIR}/ukb_MRI_RV_ID.txt --file2 ${TEMP}/${DIS}_lv --index ID > ${TEMP}/${DIS}_SNPs_MRI.txt
+  echo -e "$(tail -n + 3 ${TEMP}/${DIS}_SNPs_MRI.txt | wc -l | cut -d" " -f1) individuals carrying these ${DIS}-associated mutations included" >> ${TEMP}/${DIS}_log
   echo ""
   echo "Summarizing"
   tail -n +2 ${TEMP}/${DIS}_genes | sort -u | awk '$1 != "NA" {print}' > ${DIR}/${DIS}_ExtractIID_genes.txt

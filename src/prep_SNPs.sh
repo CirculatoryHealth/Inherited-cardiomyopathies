@@ -124,8 +124,8 @@ else
   echo "" >> ${TEMP}/${DIS}_log
 
   echo "Extract SNPs from the databases"
-  echo -e "$(wc -l ${CV} | cut -d" " -f1) SNPs extracted from the ClinVar database" >> ${TEMP}/${DIS}_log
-  echo -e "$(wc -l ${VKGL} | cut -d" " -f1) SNPs extracted from the VKGL database" >> ${TEMP}/${DIS}_log
+  echo -e "$(tail -n +2 ${CV} | wc -l | cut -d" " -f1) SNPs extracted from the ClinVar database" >> ${TEMP}/${DIS}_log
+  echo -e "$(tail -n +2 ${VKGL} | wc -l | cut -d" " -f1) SNPs extracted from the VKGL database" >> ${TEMP}/${DIS}_log
 
   echo "ID Position_38 Position_37 Gene" > ${TEMP}/${DIS}_LP_positionID
   tail -n +2 ${CV} | sed 's/ /_/g' | awk -F"\t" '{print $2, $8, $9, $10, $11, $15}' | sed 's/:/ /g' | awk '{print $4 ":" $7 ":" $8 ":" $9, $4 ":" $5 ":" $8 ":" $9, $2 ":" $3 ":" $8 ":" $9, $1}' | sed 's/_-_\([0-9]\+\):/:/g' > ${TEMP}/${DIS}_LP_positionID_temp
@@ -144,7 +144,7 @@ else
     grep -w ${GENE} ${TEMP}/${DIS}_LP_positionID_temp >> ${TEMP}/${DIS}_LP_positionID
 
   done < "${TEMP}/${DIS}_genes.txt"
-  echo -e "$(wc -l ${TEMP}/${DIS}_LP_positionID | cut -d" " -f1) SNPs remaining after filtering for ${DIS}-associated genes" >> ${TEMP}/${DIS}_log
+  echo -e "$(tail -n +2 ${TEMP}/${DIS}_LP_positionID | wc -l | cut -d" " -f1) SNPs remaining after filtering for ${DIS}-associated genes" >> ${TEMP}/${DIS}_log
   echo ""
 
   echo "Extracting SNPs present in the WES-data"
