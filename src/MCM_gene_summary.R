@@ -69,8 +69,7 @@ for (line in 1:nrow(d)) {
   
   for (col in 3:ncol(d)) {
     if (!is.na(d[line, col]) && d[line, col] == 1) {
-      row <- c(row, gsub("_variant", "", names(d)[c]))
-      
+      row <- c(row, gsub("_variant", "", names(d)[col]))
     }
 
   } # end iteration variants
@@ -78,8 +77,10 @@ for (line in 1:nrow(d)) {
   vars <- rbind(vars, row)
   vars[names(vars)[1:ncol(vars)]] <- lapply(vars[names(vars)[1:ncol(vars)]], as.character)
   
-  
 } # End iteration rows
+vars <- vars %>% select_if(colSums(!is.na(.)) > 0)
+names(vars)[1] <- "f.eid"
+names(vars)[2:ncol(vars)] <- paste0("Gene_", 2:ncol(vars)-1)
 
 
 dfs <- list()
@@ -100,35 +101,10 @@ for (cm in levels(df$CM)) {
     tmp <- tmp %>% select_if(colSums(!is.na(.)) > 0)
     tmp[is.na(tmp)] <- 0
 
-    vars <- df %>% filter(CM == cm) %>%
-      select(f.eid, ends_with("variant")) %>%
-      as.data.frame()
-    vars[names(vars)[1:ncol(vars)]] <- lapply(vars[names(vars)[1:ncol(vars)]], as.character)
-    vars <- as.data.table(vars)
-    vdf <- data.frame()
-    for (line in 1:nrow(vars)) {
-      var <- vars[line, f.eid]
-      for (c in 2:ncol(vars)) {
-        if (!is.na(vars[line, get(names(vars)[c])])) {
-          var <- c(var, gsub("_variant", "", names(vars)[c]))
-        } # End check value variant
-      } # End iteration columns
-    var <- c(var, rep(NA, (ncol(vars) - length(var))))
-    vdf <- rbind(vdf, var)
-    vdf[names(vdf)[1:ncol(vdf)]] <- lapply(vdf[names(vdf)[1:ncol(vdf)]], as.character)
-    }
-    vdf[names(vdf)[2:ncol(vdf)]] <- lapply(vdf[names(vdf)[2:ncol(vdf)]], as.factor)
-    vdf <- vdf %>% select_if(colSums(!is.na(.)) > 0)
-    names(vdf)[1] <- "f.eid"
-    names(vdf)[2:ncol(vdf)] <- paste0("Gene_", 2:ncol(vdf)-1)
-
-    dfs[[cm]] <- vdf
-    dfs[[cm]]$CM <- cm
 
   } else {
 
-    dfs[[cm]] <- ids
-    dfs[[cm]]$CM <- cm
+    gnc[gnc == 0] <- NA
     tmp <- gnc %>% select_if(colSums(!is.na(.)) > 0)
 
   } # End checking for controls
@@ -167,8 +143,7 @@ for (cm in levels(df$CM)) {
     names(ddf)[2:ncol(ddf)] <- paste0("Two_copy_LoF_", 2:ncol(ddf)-1)
   }
 
-  new <- merge(sdf, ddf, by = "f.eid")
-  dfs[[cm]] <- merge(dfs[[cm]], new, by = "f.eid")
+  dfs[[cm]] <- merge(sdf, ddf, by = "f.eid")
 
 } # End summarizing per CM
 
@@ -205,6 +180,8 @@ for (l in 1:(length(dfs) - 1)) {
   dfs[[l]][, 2:ncol(dfs[[l]])] <- lapply(dfs[[l]][, 2:ncol(dfs[[l]])], as.factor)
 } # End iteration first dfs
 df_gen <- do.call(bind_rows, dfs)
+
+df_gen <- merge(df_gen, unique(vars), by = "f.eid")
 
 
 # Saving data -------------------------------------------------------------
