@@ -47,6 +47,7 @@ for (cm in c("ACM", "DCM", "HCM", "Controls")) {
   dfs[[cm]] <- read.delim(paste0(path, cm, suffix), sep = "\t", header = T) %>%
     select(!starts_with("X"))
   dfs[[cm]]$CM <- cm
+  dfs[[cm]]$f.eid <- as.character(dfs[[cm]]$f.eid)
 
 }
 
@@ -56,7 +57,6 @@ for (cm in c("ACM", "DCM", "HCM", "Controls")) {
 message("Equalizing headers")
 
 for (l in 1:(length(dfs) - 1)) {
-  dfs[[l]]$f.eid <- as.character(dfs[[l]]$f.eid)
 
 
   col <- names(dfs[[l]])

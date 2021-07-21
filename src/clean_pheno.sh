@@ -88,7 +88,7 @@ else
   ROOT=$(pwd)
 
   echo "Making phenotype file for the controls"
-  bin/merge_tables.pl --file1 data/temp/WES_MRI_MCM_phenotypes.txt --file2 ${DIR}/Control_IDs.txt --index f.eid | sed 's/ /\t/g' > data/raw/Controls_full.tsv
+  bin/merge_tables.pl --file1 data/temp/WES_MRI_MCM_phenotypes.txt --file2 ${DIR}/Control_IDs.tsv --index f.eid | sed 's/ /\t/g' > data/raw/Controls_full.tsv
   echo ""
   echo "Combining the phenotype files"
   Rscript --vanilla ${ROOT}/src/Combine_pheno.R data/temp/ _full.tsv MCM_raw_full
@@ -97,7 +97,7 @@ else
   Rscript --vanilla ${ROOT}/src/MCM_gene_summary.R data/raw/MCM_raw_full.rds data/raw data/processed/ MCM
   echo ""
   echo "Cleaning up the phenotype file"
-  Rscript --vanilla ${ROOT}/src/MCM_pheno_clean.R data/raw/MCM_clean_full.rds data/raw data/processed MCM
+  Rscript --vanilla ${ROOT}/src/MCM_pheno_clean.R data/raw/MCM_clean_full.rds data/raw data/processed/ MCM
   echo ""
   echo "Merging the cleaned files"
   bin/merge_tables.pl --file1 data/processed/MCM_gene_summary.tsv --file2 data/processed/MCM_cleaned.tsv --index f.eid | sed 's/ /\t/g' > data/processed/MCM_final_pheno.tsv

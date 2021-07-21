@@ -47,6 +47,7 @@ source("src/functions.R")
 
 # Loading data ------------------------------------------------------------
 
+message("Loading data")
 dfs <- list()
 dfs$acm <- readr::read_delim(paste0(path, "/ACM", suffix), "\t", escape_double = FALSE, trim_ws = TRUE)
 dfs$dcm <- readr::read_delim(paste0(path, "/DCM", suffix), "\t", escape_double = FALSE, trim_ws = TRUE)
@@ -61,7 +62,7 @@ wes$f.eid <- as.character(wes$f.eid)
 mri <- read.table(paste0("data/temp/CMR_IDs.txt"), header = TRUE,
                   stringsAsFactors = FALSE)
 
-# Filter out cases
+message("Filter out cases")
 cmi <- rbind(dfs[[1]][,1], dfs[[2]][,1], dfs[[3]][,1])
 wes <- anti_join(wes, cmi, by = "f.eid")
 
@@ -73,6 +74,7 @@ rm(cmi, mri)
 
 # Control data preparation ------------------------------------------------
 
+message("Characterizing controls")
 wes$f.21000.0.0[is.na(wes$f.21000.0.0)] <- wes$f.21000.1.0[is.na(wes$f.21000.0.0)]
 wes$f.21000.0.0[is.na(wes$f.21000.0.0)] <- wes$f.21000.2.0[is.na(wes$f.21000.0.0)]
 
@@ -113,6 +115,7 @@ suc$m_yes <- subset(wes, Sex == "Male" & MRI == "Yes")
 suc$f_yes <- subset(wes, Sex == "Female" & MRI == "Yes")
 rm(wes)
 
+message("Characterizing cases")
 cases <- data.frame()
 controls <- data.frame()
 for (q in 1:length(dfs)) {
@@ -160,6 +163,7 @@ for (q in 1:length(dfs)) {
 
   # Plotting ----------------------------------------------------------------
 
+  message("Making some nice graphs")
   p <- rbind(perc_var(mri, "Sex", "MRI"), perc_var(rest, "Sex", "non-MRI")) %>%
     ggplot(aes(fill = value, x = name, y = perc)) +
     geom_col(position = position_dodge(width = 0.7),
@@ -243,6 +247,7 @@ for (q in 1:length(dfs)) {
 
 cases$CM <- as.factor(cases$CM)
 
+message("Picking controls")
 sub <- list()
 sub$m_no <- subset(cases, Sex == "Male" & MRI == "No")
 sub$f_no <- subset(cases, Sex == "Female" & MRI == "No")
@@ -281,6 +286,7 @@ for (s in 1:length(sub)) {
 } # end for-loop subset
 rm(ok, race, age, n, con, rows, ind, id, t, m, row, nac, nas, s, r)
 
+message("Saving controls ID-list")
 cids <- as.data.frame(controls$f.eid)
 write.table(cids, paste0(path, "/Control_IDs.tsv"), col.names = "f.eid",
             row.names = FALSE, quote = FALSE)
