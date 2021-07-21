@@ -115,6 +115,11 @@ else
   ## Download file with these features; Format:Tabular (text), Sort by:Location
   ## Upload file to HPC and rename it with ${DIS}_clinvar_result_LP.txt
 
+  echo "=======================================================================" > ${TEMP}/${DIS}_log
+  echo "                         Extraction ${DIS} SNPs                        " >> ${TEMP}/${DIS}_log
+  echo "=======================================================================" >> ${TEMP}/${DIS}_log
+  echo "" >> ${TEMP}/${DIS}_log
+
   echo "Extract SNPs from the databases"
   echo -e "$(wc -l ${CV} | cut -d" " -f1) SNPs extracted from the ClinVar database" >> ${TEMP}/${DIS}_log
   echo -e "$(wc -l ${VKGL} | cut -d" " -f1) SNPs extracted from the VKGL database" >> ${TEMP}/${DIS}_log
@@ -133,7 +138,7 @@ else
 
     echo "${GENE}"
     # Only add the variants that are in certain genes
-    grep ${GENE} ${TEMP}/${DIS}_LP_positionID_temp >> ${TEMP}/${DIS}_LP_positionID
+    grep -w ${GENE} ${TEMP}/${DIS}_LP_positionID_temp >> ${TEMP}/${DIS}_LP_positionID
 
   done < "${TEMP}/${DIS}_genes.txt"
   echo -e "$(wc -l ${TEMP}/${DIS}_LP_positionID | cut -d" " -f1) SNPs remaining after filtering for ${DIS}-associated genes" >> ${TEMP}/${DIS}_log
@@ -145,7 +150,7 @@ else
   sed 's/:/ /g5' data/raw/ukb_SNP_ID_WES_chrALL.txt > data/raw/ukb_SNP_ID_WES_chrALL.txt_position # replace ":" between position and ref to space
   sed 's/:/ /g2' ${TEMP}/${DIS}_LP_positionID | awk '{print $1, $4 ":" $5}' > ${TEMP}/${DIS}_LP_positionID_position
   ${OVERLAP} ${TEMP}/${DIS}_LP_positionID_position 2 data/raw/ukb_SNP_ID_WES_chrALL.txt_position 2 | sort -u > ${TEMP}/${DIS}_overlap_LP_WES_SNPs.txt_position # get overlap by position
-
+  echo "" >> ${TEMP}/${DIS}_log
   cat ${TEMP}/${DIS}_log >> ${LOG}
 
   echo ""

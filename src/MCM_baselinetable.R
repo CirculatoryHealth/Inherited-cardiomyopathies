@@ -42,7 +42,7 @@ library(ggpubr)
 # Loading data ------------------------------------------------------------
 
 message("Loading data")
-df <- data.table(read.table(input, sep = " ", header = TRUE, quote = ""))
+df <- data.table(read.table(input, sep = "\t", header = TRUE, quote = ""))
 
 
 # Making Baselinetable ----------------------------------------------------

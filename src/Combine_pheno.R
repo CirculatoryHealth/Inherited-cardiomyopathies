@@ -20,9 +20,9 @@ options(scipen = 6, digits = 4) # view outputs in non-scientific notation
 # Loading arguments -------------------------------------------------------
 
 # Arguments expected:
-#     #1 -- Path to the phenotype files, 
+#     #1 -- Path to the phenotype files,
 #           for example /hpc/dhl_ec/mvanvugt/UKBB
-#     #2 -- Suffix of the phenotype files, 
+#     #2 -- Suffix of the phenotype files,
 #           for example /hpc/dhl_ec/mvanvugt/Software/UKB-pipeline-Utrecht
 #     #3 -- Output file name, for example MCM_clean_full
 
@@ -43,11 +43,11 @@ message("Loading data")
 
 dfs <- list()
 for (cm in c("ACM", "DCM", "HCM", "Controls")) {
-  
-  dfs[[cm]] <- read.delim(paste0(path, cm, suffix), sep = " ", header = T) %>% 
+
+  dfs[[cm]] <- read.delim(paste0(path, cm, suffix), sep = "\t", header = T) %>%
     select(!starts_with("X"))
   dfs[[cm]]$CM <- cm
-  
+
 }
 
 
@@ -56,10 +56,12 @@ for (cm in c("ACM", "DCM", "HCM", "Controls")) {
 message("Equalizing headers")
 
 for (l in 1:(length(dfs) - 1)) {
-  
+  dfs[[l]]$f.eid <- as.character(dfs[[l]]$f.eid)
+
+
   col <- names(dfs[[l]])
   for (n in 2:length(dfs)) {
-    
+
     con <- names(dfs[[n]])
     if (length(con[!con %in% col]) > 0) {
       new <- con[!con %in% col]
@@ -73,10 +75,10 @@ for (l in 1:(length(dfs) - 1)) {
         dfs[[n]][c] <- NA
       } # End iteration new columns
     } # End check columns2
-    dfs[[n]] <- dfs[[n]] %>% select(order(colnames(.))) %>% 
+    dfs[[n]] <- dfs[[n]] %>% select(order(colnames(.))) %>%
       select(f.eid, everything())
   } # End iteration next dfs
-  dfs[[l]] <- dfs[[l]] %>% select(order(colnames(.))) %>% 
+  dfs[[l]] <- dfs[[l]] %>% select(order(colnames(.))) %>%
     select(f.eid, everything())
 } # End iteration first dfs
 df <- do.call(bind_rows, dfs)

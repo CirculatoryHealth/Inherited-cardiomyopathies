@@ -87,13 +87,13 @@ else
   DIR="$1"
 
   echo "Making phenotype file for the controls"
-  ${MERGE} --file1 data/temp/WES_MRI_MCM_phenotypes.txt --file2 ${DIR}/Control_IDs.txt --index f.eid > data/raw/Controls_full.txt
+  ${MERGE} --file1 data/temp/WES_MRI_MCM_phenotypes.txt --file2 ${DIR}/Control_IDs.tsv --index f.eid | sed 's/ /\t/g' > data/raw/Controls_full.tsv
   echo ""
   echo "Combining the phenotype files"
-  Rscript --vanilla ${SCRIPT}/Combine_pheno.R data/temp/ _raw.txt MCM_raw_full
+  Rscript --vanilla ${SCRIPT}/Combine_pheno.R data/raw/ _full.tsv MCM_raw_full
   echo ""
   echo "Summarizing genetic information"
-  Rscript --vanilla ${SCRIPT}/MCM_gene_summary.R data/raw/MCM_clean_full.rds data/raw data/processed/ MCM
+  Rscript --vanilla ${SCRIPT}/MCM_gene_summary.R data/raw/MCM_raw_full.rds data/raw data/processed/ MCM
   echo ""
   echo "Cleaning up the phenotype file"
   Rscript --vanilla ${SCRIPT}/MCM_pheno_clean.R data/raw/MCM_clean_full.rds data/raw data/processed MCM
