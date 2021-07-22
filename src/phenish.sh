@@ -92,7 +92,7 @@ else
   OUT="data/raw"
   TEMP="data/temp/${DIS}_temp"
 
-  sed 's/ /\t/g' ${TEMP}/${DIS}_IIDs_genes_variants.txt | sed 's/ID/f.eid/' > ${TEMP}/${DIS}_IIDs_genes.tsv
+  sed 's/ /\t/g' ${TEMP}/${DIS}_IIDs_genes_variants.txt | sed 's/ID/f.eid/' > ${TEMP}/${DIS}_IIDs_genes.txt
 
   echo "Last but not least, let's merge with the desired phenotypes"
   # Replace spaces to prevent delimiter problems
@@ -104,7 +104,7 @@ else
   # Merge with CMR-data
   bin/merge_tables.pl --file1 ${DIR}/CMR_complete_data.txt --file2 ${TEMP}/WES_MCM_phenotypes.tab --index f.eid > ${TEMP}/WES_MRI_MCM_phenotypes.txt
 
-  bin/merge_tables.pl --file1 ${TEMP}/WES_MRI_MCM_phenotypes.txt --file2 ${TEMP}/${DIS}_IIDs_genes.tsv --index f.eid | sed 's/ /\t/g' > ${OUT}/${DIS}_${SUF}
+  bin/merge_tables.pl --file1 ${TEMP}/WES_MRI_MCM_phenotypes.txt --file2 ${TEMP}/${DIS}_IIDs_genes.txt --index f.eid | sed 's/ /\t/g' > ${OUT}/${DIS}_${SUF}
 
   echo "Have a great day!"
 fi

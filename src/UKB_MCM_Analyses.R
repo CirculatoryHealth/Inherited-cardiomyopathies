@@ -64,15 +64,15 @@ for (cm in levels(df$CM)) {
   if (cm != "Controls") {
 
     f <- subset(df, CM == cm)
-    tmp <- perc_var(f, c("Gene_1", "Gene_2")) %>%
+    tmp <- perc_var(f, c("Gene_1")) %>%
       na.omit() %>%
       mutate(perc = count / 200643)
-    if (cm %in% c("HCM", "DCM")) {
-      dup <- tmp %>% filter(value == "TNNT2")
-      tmp <- tmp %>% filter(value != "TNNT2")
-      new <- c("TNNT2", sum(dup$count), sum(dup$perc), "Gene")
-      tmp <- rbind(tmp, new)
-    } # End ifelse loop adding genes that occur twice
+    # if (cm %in% c("HCM", "DCM")) {
+    #   dup <- tmp %>% filter(value == "TNNT2")
+    #   tmp <- tmp %>% filter(value != "TNNT2")
+    #   new <- c("TNNT2", sum(dup$count), sum(dup$perc), "Gene")
+    #   tmp <- rbind(tmp, new)
+    # } # End ifelse loop adding genes that occur twice
     tmp$name <- cm
     names(tmp) <- c("Gene", "N", "Prevalence_WES_UKB", "CM")
     tmp$N <- as.numeric(tmp$N)
