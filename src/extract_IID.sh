@@ -210,7 +210,6 @@ else
 
   bin/merge_tables.pl --file1 ${DIR}/ukb_MRI_LV_ID.txt --file2 ${TEMP}/${DIS}_mutation_carriers_all.txt --index ID > ${TEMP}/${DIS}_lv
   bin/merge_tables.pl --file1 ${DIR}/ukb_MRI_RV_ID.txt --file2 ${TEMP}/${DIS}_lv --index ID > ${TEMP}/${DIS}_SNPs_MRI.txt
-  echo -e "$(tail -n + 3 ${TEMP}/${DIS}_SNPs_MRI.txt | wc -l | cut -d" " -f1) individuals carrying these ${DIS}-associated mutations included" >> ${TEMP}/${DIS}_log
   echo ""
   echo "Summarizing"
   tail -n +2 ${TEMP}/${DIS}_genes | sort -u | awk '$1 != "NA" {print}' > ${DIR}/${DIS}_ExtractIID_genes.txt
@@ -218,6 +217,7 @@ else
   echo "Genes for which there are carriers with mutations:" >> ${TEMP}/${DIS}_log
   cat ${DIR}/${DIS}_ExtractIID_genes.txt >> ${TEMP}/${DIS}_log
   echo "" >> ${TEMP}/${DIS}_log
+  echo -e "$(tail -n +3 ${TEMP}/${DIS}_SNPs_MRI.txt | wc -l | cut -d" " -f1) individuals carrying these ${DIS}-associated mutations included" >> ${TEMP}/${DIS}_log
   echo "$(awk '{print $NF}' ${TEMP}/${DIS}_SNPs_MRI.txt | grep -c yes) carriers have RV data" >> ${TEMP}/${DIS}_log
   echo "$(awk '{print $((NF-1))}' ${TEMP}/${DIS}_SNPs_MRI.txt | grep -c yes) carriers have LV data" >> ${TEMP}/${DIS}_log
   echo "" >> ${TEMP}/${DIS}_log

@@ -52,6 +52,9 @@ dfs <- list()
 dfs$acm <- readr::read_delim(paste0(path, "/ACM", suffix), "\t", escape_double = FALSE, trim_ws = TRUE)
 dfs$dcm <- readr::read_delim(paste0(path, "/DCM", suffix), "\t", escape_double = FALSE, trim_ws = TRUE)
 dfs$hcm <- readr::read_delim(paste0(path, "/HCM", suffix), "\t", escape_double = FALSE, trim_ws = TRUE)
+dfs$acm$f.eid <- as.character(dfs$acm$f.eid)
+dfs$dcm$f.eid <- as.character(dfs$dcm$f.eid)
+dfs$hcm$f.eid <- as.character(dfs$hcm$f.eid)
 
 PptPath <- figs
 mul <- 4 # Number of controls to be picked per case
