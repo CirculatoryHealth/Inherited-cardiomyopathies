@@ -94,7 +94,8 @@ else
   Rscript --vanilla ${ROOT}/src/Combine_pheno.R data/temp/ _full.tsv MCM_raw_full
   echo ""
   echo "Summarizing genetic information"
-  Rscript --vanilla ${ROOT}/src/MCM_gene_summary.R data/raw/MCM_raw_full.rds data/raw data/processed/ MCM
+  Rscript --vanilla ${ROOT}/src/MCM_gene_summary.R data/raw/MCM_raw_full.rds data/raw data/temp/ MCM
+  bin/merge_tables.pl --file1 data/processed/All_SNP_IID.txt --file2 data/temp/MCM_gene_summary.tsv --index f.eid | sort -ur | sed 's/ /\t/g' > data/processed/MCM_gene_summary.tsv 
   echo ""
   echo "Cleaning up the phenotype file"
   Rscript --vanilla ${ROOT}/src/MCM_pheno_clean.R data/raw/MCM_clean_full.rds data/raw data/processed/ MCM

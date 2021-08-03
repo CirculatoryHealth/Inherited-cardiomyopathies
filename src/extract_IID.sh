@@ -175,6 +175,27 @@ else
   bin/merge_tables.pl --file1 ${TEMP}/${DIS}_chrALL.vcf --file2 ${TEMP}/snp_gen --index ID | sed 's/ /\t/g' | cut -f1,2,11- > ${TEMP}/${DIS}_gene.vcf
   cut -f2 ${TEMP}/${DIS}_gene.vcf > ${TEMP}/${DIS}_genes
 
+  echo ""
+  echo "Getting SNP and gene per individual"
+  tail -n +2 ${TEMP}/${DIS}_gene.vcf | cut -f1,2 > ${TEMP}/${DIS}_SNPs.txt
+
+  if [[ -e ${ROOT}/data/processed/All_SNP_IID.txt ]]; then
+      echo "f.eid SNP Gene" > ${ROOT}/data/processed/All_SNP_IID.txt
+  fi
+
+  while IFS= read -r line; do
+
+      entries=($line)
+      SNP=$(echo "${entries[0]}")
+      GENE=$(echo "${entries[1]}")
+
+      echo "${SNP}"
+      NUM=`grep ${SNP} ${TEMP}/${DIS}_gene.vcf | ${ROOT}/bin/transpose_perl.pl | grep -n 1 | tail -n +2 | sed 's/:/\t/g' | cut -f1 | ${ROOT}/bin/transpose_perl.pl | sed 's/\t/,/g'`
+      head -1 ${TEMP}/${DIS}_gene.vcf | cut -f${NUM} | ${ROOT}/bin/transpose_perl.pl | awk -v snp="${SNP}" -v gen="${GENE}" '{print $1, snp, gen}' >> ${ROOT}/data/processed/All_SNP_IID.txt
+
+  done < "${TEMP}/${DIS}_SNPs.txt"
+  echo ""
+
   echo "Transposing vcf-file so header are SNPs and rows are individuals"
   cat ${TEMP}/${DIS}_gene.vcf | bin/transpose_perl.pl > ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.transpose
 

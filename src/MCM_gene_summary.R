@@ -32,7 +32,7 @@ rm(list=ls())
 args = commandArgs(trailingOnly = TRUE)
 pheno = args[1] # "data/raw/MCM_clean_full.rds"
 files = args[2] # "data/temp"
-output = args[3] # "data/processed/"
+output = args[3] # "data/temp/"
 prefix = args[4] # "MCM"
 
 
@@ -66,7 +66,7 @@ vars <- data.frame()
 
 for (line in 1:nrow(d)) {
   row <- d[line, 1]
-  
+
   for (col in 3:ncol(d)) {
     if (!is.na(d[line, col]) && d[line, col] == 1) {
       row <- c(row, gsub("_variant", "", names(d)[col]))
@@ -76,7 +76,7 @@ for (line in 1:nrow(d)) {
   row <- c(row, rep(NA, (ncol(d) - length(row) - 2)))
   vars <- rbind(vars, row)
   vars[names(vars)[1:ncol(vars)]] <- lapply(vars[names(vars)[1:ncol(vars)]], as.character)
-  
+
 } # End iteration rows
 vars <- vars %>% select_if(colSums(!is.na(.)) > 0)
 names(vars)[1] <- "f.eid"
