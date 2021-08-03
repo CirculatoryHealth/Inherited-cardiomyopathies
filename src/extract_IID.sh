@@ -179,7 +179,7 @@ else
   echo "Getting SNP and gene per individual"
   tail -n +2 ${TEMP}/${DIS}_gene.vcf | cut -f1,2 > ${TEMP}/${DIS}_SNPs.txt
 
-  if [[ -e ${ROOT}/data/processed/All_SNP_IID.txt ]]; then
+  if [[ ! -e ${ROOT}/data/processed/All_SNP_IID.txt ]]; then
       echo "f.eid SNP Gene" > ${ROOT}/data/processed/All_SNP_IID.txt
   fi
 
