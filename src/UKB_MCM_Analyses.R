@@ -100,21 +100,95 @@ test <- list()
 pval <- data.frame(Phenotype = cvd)
 for (cm in levels(df$CM)) {
   if (cm != "Controls") {
-
+    
     f <- df %>% select(any_of(cvd), CM) %>% filter(CM %in% c(cm,  "Controls"))
     f$CM <- droplevels(f$CM)
-    ps <- vector()
+    
+    fd <- df %>% 
+      select(any_of(cvd), Heart_Failure_sum, Cardiomyopathy_sum, CM) %>% 
+      filter(CM %in% c(cm,  "Controls")) %>% 
+      filter(Heart_Failure_sum == "Yes" | Cardiomyopathy_sum == "Yes")
+    fd$CM <- droplevels(fd$CM)
+    
+    fh <- df %>%
+      select(any_of(cvd), Heart_Failure_sum, Cardiomyopathy_sum, CM) %>%
+      filter(CM %in% c(cm, "Controls")) %>%
+      filter(Heart_Failure_sum == "No", Cardiomyopathy_sum == "No")
+    fh$CM <- droplevels(fh$CM)
+    
+    pa <- data.frame()
     for (x in cvd) {
+      ps <- vector()
+
       tmp <- f %>% dplyr::select(any_of(x), CM)
       test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
       ps <- c(ps, test[[x]]$p.value)
-      write.table(table(tmp), "results/output/CVD_enrichment_XTab.tsv",
-                  sep = "\t", quote = FALSE, append = TRUE,
-                  col.names = c(x, paste("Controls", cm, sep = "_")))
+      
+      if (!x %in% c("Heart_Failure_sum", "Cardiomyopathy_sum", "DCM_sum", "HCM_sum")) {
+        
+        tmp <- fd %>% dplyr::select(any_of(x), CM)
+        test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
+        ps <- c(ps, test[[x]]$p.value)
+        
+        tmp <- fh %>% dplyr::select(any_of(x), CM)
+        test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
+        ps <- c(ps, test[[x]]$p.value)
+        
+      } else {
+        
+        ps <- c(ps, NA, NA)
+        
+      }
+      
+      pa <- rbind(pa, ps)
+      # write.table(table(tmp), "results/output/CVD_enrichment_XTab.tsv",
+      #             sep = "\t", quote = FALSE, append = TRUE,
+      #             col.names = c(x, paste("Controls", cm, sep = "_")))
+    }
+    pval <- cbind(pval, pa)
+    names(pval)[(ncol(pval)-2):ncol(pval)] <- c(cm, paste0(cm, "_diagnosed"), paste0(cm, "_nondiagnosed"))
+    
+  }
+}
+write.table(pval, "results/output/CVD_enrichment_fisher.tsv", sep = "\t",
+            quote = FALSE, row.names = FALSE)
+rm(test, pval, f, ps, cm, tmp, x)
+
+
+message("Test for enrichment in certain phenotypes")
+cvd <- df %>% select(Sex, Ethnicity, ends_with("sum")) %>% 
+  select(-Heart_Failure_sum, -Cardiomyopathy_sum, -DCM_sum, -HCM_sum) %>% names()
+test <- list()
+pval <- data.frame(Phenotype = cvd)
+for (cm in levels(df$CM)) {
+  if (cm != "Controls") {
+    
+    fd <- df %>% 
+      select(any_of(cvd), Heart_Failure_sum, Cardiomyopathy_sum, CM) %>% 
+      filter(CM %in% c(cm,  "Controls")) %>% 
+      filter(Heart_Failure_sum == "Yes" | Cardiomyopathy_sum == "Yes")
+    fd$CM <- droplevels(fd$CM)
+    
+    fh <- df %>%
+      select(any_of(cvd), Heart_Failure_sum, Cardiomyopathy_sum, CM) %>%
+      filter(CM %in% c(cm, "Controls")) %>%
+      filter(Heart_Failure_sum == "No", Cardiomyopathy_sum == "No")
+    fh$CM <- droplevels(fh$CM)
+    ps <- vector()
+    for (x in cvd) {
+      tmp <- fd %>% dplyr::select(any_of(x), CM)
+      test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
+      ps <- c(ps, test[[x]]$p.value)
+      tmp <- fh %>% dplyr::select(any_of(x), CM)
+      test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
+      ps <- c(ps, test[[x]]$p.value)
+      # write.table(table(tmp), "results/output/CVD_enrichment_XTab.tsv",
+      #             sep = "\t", quote = FALSE, append = TRUE,
+      #             col.names = c(x, paste("Controls", cm, sep = "_")))
     }
     pval <- cbind(pval, ps)
     names(pval)[ncol(pval)] <- cm
-
+    
   }
 }
 write.table(pval, "results/output/CVD_enrichment_fisher.tsv", sep = "\t",
