@@ -74,6 +74,7 @@ fac.col <- c("Sex", "Ethnicity", diag, "CM")
 df <- as.data.frame(df)
 df[fac.col] <- lapply(df[fac.col], as.factor)
 nn.col <- cols[!cols %in% fac.col]
+df$Sex <- factor(df$Sex, levels = c("Male", "Female"))
 
 # ocol <- vector()
 # norm <- list()
