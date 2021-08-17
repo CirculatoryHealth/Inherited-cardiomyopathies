@@ -45,12 +45,27 @@ message("Loading data")
 df <- data.table(read.table(input, sep = "\t", header = TRUE, quote = ""))
 
 
+# CMR parameters ----------------------------------------------------------
+
+n <- grep("LVEDM.LVEDV", names(df))
+names(df)[n] <- "LVMVR"
+n <- grep("LV_RV_EDV", names(df))
+names(df)[n] <- "LVEDV/RVEDV"
+
+n <- grep("AHA", names(df))
+names(df)[n] <- gsub("AHA", "Wall_thickness_segment", names(df)[n])
+n <- grep("Global", names(df))
+names(df)[n] <- "Global_wall_thickness"
+
+df$Septal_wall_thickness <- (df$Wall_thickness_segment_2 + df$Wall_thickness_segment_3 + df$Wall_thickness_segment_8 + df$Wall_thickness_segment_9 + df$Wall_thickness_segment_14) / 5
+
+
 # Making Baselinetable ----------------------------------------------------
 
 # The vectors are created with column names which we want to include in the
 # baseline-table. If a column name is not represented in the vector cols, it
 # will not be included in the baseline-table, so this should be changed here.
-cmr <- df %>% select(starts_with("RV"), starts_with("LV")) %>% names()
+cmr <- df %>% select(starts_with("RV"), starts_with("LV"), contains("Wall_thickness")) %>% names()
 ecg <- c("ECG_heart_rate.0_mean", "P_duration", "P_axis.2.0",
          "PQ_interval.2.0", "QRS_duration", "R_axis.2.0",
          "QTC_interval.2.0", "T_axis.2.0")
@@ -75,6 +90,9 @@ df <- as.data.frame(df)
 df[fac.col] <- lapply(df[fac.col], as.factor)
 nn.col <- cols[!cols %in% fac.col]
 df$Sex <- factor(df$Sex, levels = c("Male", "Female"))
+df$Pheno[df$Heart_Failure_sum == "Yes" | df$Cardiomyopathy_sum == "Yes"] <- "Diagnosed"
+df$Pheno[df$Heart_Failure_sum == "No" & df$Cardiomyopathy_sum == "No"] <- "Non-Diagnosed"
+df$Pheno <- as.factor(df$Pheno)
 
 # ocol <- vector()
 # norm <- list()
@@ -96,15 +114,45 @@ df$Sex <- factor(df$Sex, levels = c("Male", "Female"))
 #          "RVEF", "RVPFR", "LVPER", "LVPFR")
 # ocol <- ocol[!ocol %in% rem]
 
-message("Creating the baseline table")
+message("Creating the baseline tables")
 tab1 <- CreateTableOne(vars = cols, data = df, factorVars = fac.col,
                        strata = "CM", addOverall = FALSE)
 ex1 <- print(tab1, showAllLevels = FALSE, missing = TRUE, nonnormal = nn.col,
              formatOptions = list(big.mark = ","), quote = FALSE,
              noSpaces = TRUE, printToggle = FALSE)
 
+acm <- subset(df, CM == "ACM")
+dcm <- subset(df, CM == "DCM")
+hcm <- subset(df, CM == "HCM")
+con <- subset(df, CM == "Controls")
+
+taba <- CreateTableOne(vars = cols, data = acm, factorVars = fac.col,
+                       strata = "Pheno", addOverall = TRUE)
+exa <- print(taba, showAllLevels = FALSE, missing = TRUE, nonnormal = nn.col,
+             formatOptions = list(big.mark = ","), quote = FALSE,
+             noSpaces = TRUE, printToggle = FALSE)
+tabd <- CreateTableOne(vars = cols, data = dcm, factorVars = fac.col,
+                      strata = "Pheno", addOverall = TRUE)
+exd <- print(tabd, showAllLevels = FALSE, missing = TRUE, nonnormal = nn.col,
+            formatOptions = list(big.mark = ","), quote = FALSE,
+            noSpaces = TRUE, printToggle = FALSE)
+tabh <- CreateTableOne(vars = cols, data = hcm, factorVars = fac.col,
+                      strata = "Pheno", addOverall = TRUE)
+exh <- print(tabh, showAllLevels = FALSE, missing = TRUE, nonnormal = nn.col,
+            formatOptions = list(big.mark = ","), quote = FALSE,
+            noSpaces = TRUE, printToggle = FALSE)
+tabc <- CreateTableOne(vars = cols, data = con, factorVars = fac.col,
+                      strata = "Pheno", addOverall = TRUE)
+exc <- print(tabc, showAllLevels = FALSE, missing = TRUE, nonnormal = nn.col,
+            formatOptions = list(big.mark = ","), quote = FALSE,
+            noSpaces = TRUE, printToggle = FALSE)
+
 message("Saving data")
 write.csv(ex1, paste0(output, prefix, "_Table1.csv"))
+write.csv(exa, paste0(output, "ACM_Table1.csv"))
+write.csv(exd, paste0(output, "DCM_Table1.csv"))
+write.csv(exh, paste0(output, "HCM_Table1.csv"))
+write.csv(exc, paste0(output, "Controls_Table1.csv"))
 
 # And last but not least, the final dataframe used to create the baseline-
 # table is exported as well.
