@@ -23,6 +23,7 @@ core*
 data/processed/*
 data/raw/ukb_SNP_ID_WES_chrALL.txt
 *png
+*xls*
 
 # Log files
 *log
