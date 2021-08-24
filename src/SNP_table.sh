@@ -9,7 +9,7 @@ while IFS= read -r line; do
 
   echo "Searching for the following SNP now: ${line}"
   COL=`head -1 data/temp/${DIS}_temp/${DIS}_SNPs_MRI.txt | bin/transpose_perl.pl | grep -n ${line} | sed 's/:/\t/' | cut -f1`
-  echo -e "${line} $(awk -v col="${COL}" '{print $col}' data/temp/${DIS}_temp/${DIS}_SNPs_MRI.txt | grep -c 1)" >> data/temp/overlap_SNPs_${DIS}.txt
+  echo -e "${line} $(awk -v col="${COL}" '{print $col}' data/temp/${DIS}_temp/${DIS}_SNPs_MRI.txt | tail -n +2 | grep -c 1)" >> data/temp/overlap_SNPs_${DIS}.txt
 
 done < "data/temp/${DIS}_overlap_LP_WES_SNPs_updated.txt"
 
