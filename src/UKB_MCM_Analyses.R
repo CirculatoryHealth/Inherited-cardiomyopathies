@@ -100,22 +100,22 @@ test <- list()
 pval <- data.frame(Phenotype = cvd)
 for (cm in levels(df$CM)) {
   if (cm != "Controls") {
-    
+
     f <- df %>% select(any_of(cvd), CM) %>% filter(CM %in% c(cm,  "Controls"))
     f$CM <- droplevels(f$CM)
-    
-    fd <- df %>% 
-      select(any_of(cvd), Heart_Failure_sum, Cardiomyopathy_sum, CM) %>% 
-      filter(CM %in% c(cm,  "Controls")) %>% 
+
+    fd <- df %>%
+      select(any_of(cvd), Heart_Failure_sum, Cardiomyopathy_sum, CM) %>%
+      filter(CM %in% c(cm,  "Controls")) %>%
       filter(Heart_Failure_sum == "Yes" | Cardiomyopathy_sum == "Yes")
     fd$CM <- droplevels(fd$CM)
-    
+
     fh <- df %>%
       select(any_of(cvd), Heart_Failure_sum, Cardiomyopathy_sum, CM) %>%
       filter(CM %in% c(cm, "Controls")) %>%
       filter(Heart_Failure_sum == "No", Cardiomyopathy_sum == "No")
     fh$CM <- droplevels(fh$CM)
-    
+
     pa <- data.frame()
     for (x in cvd) {
       ps <- vector()
@@ -123,23 +123,23 @@ for (cm in levels(df$CM)) {
       tmp <- f %>% dplyr::select(any_of(x), CM)
       test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
       ps <- c(ps, test[[x]]$p.value)
-      
+
       if (!x %in% c("Heart_Failure_sum", "Cardiomyopathy_sum", "DCM_sum", "HCM_sum")) {
-        
+
         tmp <- fd %>% dplyr::select(any_of(x), CM)
         test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
         ps <- c(ps, test[[x]]$p.value)
-        
+
         tmp <- fh %>% dplyr::select(any_of(x), CM)
         test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
         ps <- c(ps, test[[x]]$p.value)
-        
+
       } else {
-        
+
         ps <- c(ps, NA, NA)
-        
+
       }
-      
+
       pa <- rbind(pa, ps)
       # write.table(table(tmp), "results/output/CVD_enrichment_XTab.tsv",
       #             sep = "\t", quote = FALSE, append = TRUE,
@@ -147,7 +147,7 @@ for (cm in levels(df$CM)) {
     }
     pval <- cbind(pval, pa)
     names(pval)[(ncol(pval)-2):ncol(pval)] <- c(cm, paste0(cm, "_diagnosed"), paste0(cm, "_nondiagnosed"))
-    
+
   }
 }
 write.table(pval, "results/output/CVD_enrichment_fisher.tsv", sep = "\t",
@@ -156,19 +156,19 @@ rm(test, pval, f, ps, cm, tmp, x)
 
 
 message("Test for enrichment in certain phenotypes")
-cvd <- df %>% select(Sex, Ethnicity, ends_with("sum")) %>% 
+cvd <- df %>% select(Sex, Ethnicity, ends_with("sum")) %>%
   select(-Heart_Failure_sum, -Cardiomyopathy_sum, -DCM_sum, -HCM_sum) %>% names()
 test <- list()
 pval <- data.frame(Phenotype = cvd)
 for (cm in levels(df$CM)) {
   if (cm != "Controls") {
-    
-    fd <- df %>% 
-      select(any_of(cvd), Heart_Failure_sum, Cardiomyopathy_sum, CM) %>% 
-      filter(CM %in% c(cm,  "Controls")) %>% 
+
+    fd <- df %>%
+      select(any_of(cvd), Heart_Failure_sum, Cardiomyopathy_sum, CM) %>%
+      filter(CM %in% c(cm,  "Controls")) %>%
       filter(Heart_Failure_sum == "Yes" | Cardiomyopathy_sum == "Yes")
     fd$CM <- droplevels(fd$CM)
-    
+
     fh <- df %>%
       select(any_of(cvd), Heart_Failure_sum, Cardiomyopathy_sum, CM) %>%
       filter(CM %in% c(cm, "Controls")) %>%
@@ -188,7 +188,7 @@ for (cm in levels(df$CM)) {
     }
     pval <- cbind(pval, ps)
     names(pval)[ncol(pval)] <- cm
-    
+
   }
 }
 write.table(pval, "results/output/CVD_enrichment_fisher.tsv", sep = "\t",
@@ -198,8 +198,19 @@ rm(test, pval, f, ps, cm, tmp, x)
 
 # Other statistics --------------------------------------------------------
 
-cmr <- df %>% select(starts_with("RV"), starts_with("LV")) %>%
-  select(!c(LV, RV)) %>% names()
+n <- grep("LVEDM.LVEDV", names(df))
+names(df)[n] <- "LVMVR"
+n <- grep("LV_RV_EDV", names(df))
+names(df)[n] <- "LVEDV/RVEDV"
+
+n <- grep("AHA", names(df))
+names(df)[n] <- gsub("AHA", "Wall_thickness_segment", names(df)[n])
+n <- grep("Global", names(df))
+names(df)[n] <- "Global_wall_thickness"
+
+df$Septal_wall_thickness <- (df$Wall_thickness_segment_2 + df$Wall_thickness_segment_3 + df$Wall_thickness_segment_8 + df$Wall_thickness_segment_9 + df$Wall_thickness_segment_14) / 5
+
+cmr <- df %>% select(starts_with("RV"), starts_with("LV"), contains("Wall_thickness")) %>% select(-c("RV", "LV")) %>% names()
 ecg <- c("ECG_heart_rate.0_mean", "P_duration", "P_axis.2.0",
          "PQ_interval.2.0", "QRS_duration", "R_axis.2.0",
          "QTC_interval.2.0", "T_axis.2.0")
@@ -307,6 +318,6 @@ ex1 <- print(tab1, showAllLevels = FALSE, formatOptions = list(big.mark = ","),
 
 write.csv(ex1, "results/output/LoF_Table.csv")
 
-write.table(new, "data/temp/LoF_Table_data.tsv", row.names = FALSE, 
+write.table(new, "data/temp/LoF_Table_data.tsv", row.names = FALSE,
             col.names = TRUE, quote = FALSE, sep = "\t")
 saveRDS(new, "data/temp/LoF_Table_data.rds")

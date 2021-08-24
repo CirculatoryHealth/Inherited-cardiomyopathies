@@ -16,7 +16,7 @@
 ## Options ---------------------------
 
 options(scipen = 6, digits = 4) # view outputs in non-scientific notation
-
+set.seed(194)
 
 ## Loading arguments --------------------------
 

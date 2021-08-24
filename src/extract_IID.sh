@@ -117,7 +117,7 @@ else
   tail -n +2 /hpc/dhl_ec/aalasiri/CMR_metrics/PheWAS_MRI/ukb_MRI_RV_clean.txt | awk '{print $1,$1}' > ${TEMP}/ukb_MRI_RV_IID_clean.txt
 
   # Adding indels to SNP-lists
-  echo -e "$(wc -l ${INDEL} | cut -d" " -f1) indels included" >> ${TEMP}/${DIS}_log
+  echo -e "$(sort -u ${INDEL} | wc -l | cut -d" " -f1) indels included" >> ${TEMP}/${DIS}_log
   awk '{print $1}' ${INDEL} >> ${DIR}/${DIS}_overlap_LP_WES_SNPs.txt
 
   ## Allele freq. using Plink
@@ -135,16 +135,18 @@ else
 
   awk '$5 != 0 {print $0}' ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.allele_frq > ${DIR}/${DIS}_WES_MRI_UKB_chrALL.allele_frq_filtered
   awk '{print $2}' ${DIR}/${DIS}_WES_MRI_UKB_chrALL.allele_frq_filtered > ${DIR}/${DIS}_overlap_LP_WES_SNPs_updated.txt
-  echo -e "$(wc -l ${DIR}/${DIS}_overlap_LP_WES_SNPs_updated.txt | cut -d" " -f1) SNPs with carriers in the UK Biobank" >> ${TEMP}/${DIS}_log
+  echo -e "$(sort -u ${DIR}/${DIS}_overlap_LP_WES_SNPs_updated.txt | wc -l | cut -d" " -f1) SNPs with carriers in the UK Biobank" >> ${TEMP}/${DIS}_log
 
   # Remove SNPs that have overlap between HCM/DCM/ACM and are not annotated well
+  # Extract all to be included SNPs from VKGL and check in Clinvar. Annotated for ${DIS} of cardiomyopathy? Include, else exclude -- add column 2 to data/raw/${DIS}_remove_overlap.txt
+  ${ROOT}/bin/overlap.pl ${DIR}/${DIS}_overlap_LP_WES_SNPs_updated.txt 1 ${TEMP}/${DIS}_VKGL_positionID 1 > ${TEMP}/${DIS}_VKGL_check
   if [[ -e data/raw/${DIS}_remove_overlap.txt ]]; then
-    echo -e "$(wc -l data/raw/${DIS}_remove_overlap.txt | cut -d" " -f1) SNPs removed due to ambiguous annotation" >> ${TEMP}/${DIS}_log
-    awk 'NR==FNR{a[$0];next}!($0 in a)' data/raw/${DIS}_remove_overlap.txt ${DIR}/${DIS}_overlap_LP_WES_SNPs_updated.txt > ${TEMP}/${DIS}_temp
+    echo -e "$(sort -u data/raw/${DIS}_remove_overlap.txt | wc -l | cut -d" " -f1) SNPs removed due to ambiguous annotation" >> ${TEMP}/${DIS}_log
+    ${ROOT}/bin/overlap.pl data/raw/${DIS}_remove_overlap.txt 1 ${DIR}/${DIS}_overlap_LP_WES_SNPs_updated.txt 1 -v > ${TEMP}/${DIS}_temp
     mv ${TEMP}/${DIS}_temp ${DIR}/${DIS}_overlap_LP_WES_SNPs_updated.txt
   fi
 
-  echo -e "$(wc -l ${DIR}/${DIS}_overlap_LP_WES_SNPs_updated.txt | cut -d" " -f1) SNPs to extract UKB-individuals for" >> ${TEMP}/${DIS}_log
+  echo -e "$(sort -u ${DIR}/${DIS}_overlap_LP_WES_SNPs_updated.txt | wc -l | cut -d" " -f1) SNPs to extract UKB-individuals for" >> ${TEMP}/${DIS}_log
   echo "" >> ${TEMP}/${DIS}_log
   echo "Making vcf-files with only desired snps"
   for CHR in $(seq 1 22); do
@@ -238,7 +240,7 @@ else
   echo "Genes for which there are carriers with mutations:" >> ${TEMP}/${DIS}_log
   cat ${DIR}/${DIS}_ExtractIID_genes.txt >> ${TEMP}/${DIS}_log
   echo "" >> ${TEMP}/${DIS}_log
-  echo -e "$(tail -n +3 ${TEMP}/${DIS}_SNPs_MRI.txt | wc -l | cut -d" " -f1) individuals carrying these ${DIS}-associated mutations included" >> ${TEMP}/${DIS}_log
+  echo -e "$(tail -n +3 ${TEMP}/${DIS}_SNPs_MRI.txt | sort -u | wc -l | cut -d" " -f1) individuals carrying these ${DIS}-associated mutations included" >> ${TEMP}/${DIS}_log
   echo "$(awk '{print $NF}' ${TEMP}/${DIS}_SNPs_MRI.txt | grep -c yes) carriers have RV data" >> ${TEMP}/${DIS}_log
   echo "$(awk '{print $((NF-1))}' ${TEMP}/${DIS}_SNPs_MRI.txt | grep -c yes) carriers have LV data" >> ${TEMP}/${DIS}_log
   echo "" >> ${TEMP}/${DIS}_log

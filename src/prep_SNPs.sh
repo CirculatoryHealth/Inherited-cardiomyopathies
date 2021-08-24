@@ -124,13 +124,16 @@ else
   echo "" >> ${TEMP}/${DIS}_log
 
   echo "Extract SNPs from the databases"
-  echo -e "$(tail -n +2 ${CV} | wc -l | cut -d" " -f1) SNPs extracted from the ClinVar database" >> ${TEMP}/${DIS}_log
-  echo -e "$(tail -n +2 ${VKGL} | wc -l | cut -d" " -f1) SNPs extracted from the VKGL database" >> ${TEMP}/${DIS}_log
+  echo -e "$(tail -n +2 ${CV} | sort -u | wc -l | cut -d" " -f1) SNPs extracted from the ClinVar database" >> ${TEMP}/${DIS}_log
+  echo -e "$(tail -n +2 ${VKGL} | sort -u | wc -l | cut -d" " -f1) SNPs extracted from the VKGL database" >> ${TEMP}/${DIS}_log
 
   echo "ID Position_38 Position_37 Gene" > ${TEMP}/${DIS}_LP_positionID
   tail -n +2 ${CV} | sed 's/ /_/g' | awk -F"\t" '{print $2, $8, $9, $10, $11, $15}' | sed 's/:/ /g' | awk '{print $4 ":" $7 ":" $8 ":" $9, $4 ":" $5 ":" $8 ":" $9, $2 ":" $3 ":" $8 ":" $9, $1}' | sed 's/_-_\([0-9]\+\):/:/g' > ${TEMP}/${DIS}_LP_positionID_temp
-  tail -n +2 ${VKGL} | awk '{print $3 ":" $9 ":" $10, $3 ":" $9 ":" $10, $2 ":" $9 ":" $10, $4}' >> ${TEMP}/${DIS}_LP_positionID_temp
-  echo ""
+  tail -n +2 ${VKGL} | tail -n +2 ${VKGL} | cut -f 2-4,9,10,14 | awk '{print $2 ":" $4 ":" $5, $2 ":" $4 ":" $5, $1 ":" $4 ":" $5, $3, $6}' >> ${TEMP}/${DIS}_VKGL_positionID_temp
+  ${OVERLAP} ${TEMP}/${DIS}_LP_positionID_temp 2 ${TEMP}/${DIS}_VKGL_positionID_temp 2 -v > ${TEMP}/${DIS}_VKGL_positionID
+  echo -e "$(sort -u ${TEMP}/${DIS}_VKGL_positionID | wc -l | cut -d" " -f1) unique SNPs from the VKGL database added to ClinVar" >> ${TEMP}/${DIS}_log
+  cat ${TEMP}/${DIS}_VKGL_positionID >> ${TEMP}/${DIS}_LP_positionID_temp
+  echo "" >> ${TEMP}/${DIS}_log
   # Filter for certain genes
   awk -v cm=${DIS} '$2 == cm {print $1}' ${DIR}/CM_genes.txt > ${TEMP}/${DIS}_genes.txt
   echo "Checking for gene: "
@@ -144,8 +147,8 @@ else
     grep -w ${GENE} ${TEMP}/${DIS}_LP_positionID_temp >> ${TEMP}/${DIS}_LP_positionID
 
   done < "${TEMP}/${DIS}_genes.txt"
-  echo -e "$(tail -n +2 ${TEMP}/${DIS}_LP_positionID | wc -l | cut -d" " -f1) SNPs remaining after filtering for ${DIS}-associated genes" >> ${TEMP}/${DIS}_log
-  echo ""
+  echo -e "$(tail -n +2 ${TEMP}/${DIS}_LP_positionID | sort -u | wc -l | cut -d" " -f1) SNPs remaining after filtering for ${DIS}-associated genes" >> ${TEMP}/${DIS}_log
+  echo "" >> ${TEMP}/${DIS}_log
 
   echo "Extracting SNPs present in the WES-data"
   ## Overlap with WES
