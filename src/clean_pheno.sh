@@ -95,10 +95,10 @@ else
   echo ""
   echo "Summarizing genetic information"
   Rscript --vanilla ${ROOT}/src/MCM_gene_summary.R data/raw/MCM_raw_full.rds data/raw data/temp/ MCM
-  bin/merge_tables.pl --file1 data/processed/All_SNP_IID.txt --file2 data/temp/MCM_gene_summary.tsv --index f.eid | sort -ur | sed 's/ /\t/g' > data/processed/MCM_gene_summary.tsv 
+  bin/merge_tables.pl --file1 data/processed/All_SNP_IID.txt --file2 data/temp/MCM_gene_summary.tsv --index f.eid | sort -ur | sed 's/ /\t/g' > data/processed/MCM_gene_summary.tsv
   echo ""
   echo "Cleaning up the phenotype file"
-  Rscript --vanilla ${ROOT}/src/MCM_pheno_clean.R data/raw/MCM_clean_full.rds data/raw data/processed/ MCM
+  Rscript --vanilla ${ROOT}/src/MCM_pheno_clean.R data/raw/MCM_raw_full.rds data/raw data/processed/ MCM
   echo ""
   echo "Merging the cleaned files"
   bin/merge_tables.pl --file1 data/processed/MCM_gene_summary.tsv --file2 data/processed/MCM_cleaned.tsv --index f.eid | sed 's/ /\t/g' > data/processed/MCM_final_pheno.tsv

@@ -20,9 +20,9 @@ options(scipen = 6, digits = 4) # view outputs in non-scientific notation
 ## Loading arguments --------------------------
 
 # Arguments expected:
-#     #1 -- Path to and name of the phenotype file, 
+#     #1 -- Path to and name of the phenotype file,
 #           for example /hpc/dhl_ec/mvanvugt/UKBB/Project1_ukb_phenotypes.tab
-#     #2 -- Directory to the helper files, 
+#     #2 -- Directory to the helper files,
 #           for example /hpc/dhl_ec/mvanvugt/Software/UKB-pipeline-Utrecht
 #     #3 -- Output directory, for example /hpc/dhl_ec/mvanvugt/UKBB
 #     #4 -- Prefix of the output files
@@ -44,7 +44,7 @@ library(stringr)
 # Loading data ------------------------------------------------------------
 
 message("Loading Data")
-d <- data.table(readRDS(pheno)) 
+d <- data.table(readRDS(pheno))
 d$CM <- as.factor(d$CM)
 cols <- colnames(d)
 
@@ -55,9 +55,9 @@ backup <- d
 # Preparing helper files --------------------------------------------------
 
 message("Preparing helper files...")
-desc <- read.table(paste0(files, "/Dictionary_Field_ID_desc.tsv"), 
-                   header = TRUE, sep = "\t", quote = "", 
-                   stringsAsFactors = FALSE) 
+desc <- read.table(paste0(files, "/Dictionary_Field_ID_desc.tsv"),
+                   header = TRUE, sep = "\t", quote = "",
+                   stringsAsFactors = FALSE)
 for (line in 1:nrow(desc)) {
   x <- desc[line, 1]
   desc[line, 1] <- paste0("f.", x, ".")
@@ -65,10 +65,10 @@ for (line in 1:nrow(desc)) {
 }
 rm(x, line)
 
-summ <- read.table(paste0(files, "/Summary_outcomes.txt"), sep = "\t", 
+summ <- read.table(paste0(files, "/Summary_outcomes.txt"), sep = "\t",
                    header = TRUE, stringsAsFactors = FALSE, quote = "")
-rep <- read.table(paste0(files, "/UKB_repeat_measurements.txt"), 
-                  header = FALSE, stringsAsFactors = FALSE, quote = "") 
+rep <- read.table(paste0(files, "/UKB_repeat_measurements.txt"),
+                  header = FALSE, stringsAsFactors = FALSE, quote = "")
 nas <- read.table(paste0(files, "/UKB_missing_merge.txt"),
                   header = FALSE, stringsAsFactors = FALSE, quote = "")
 
@@ -106,11 +106,11 @@ message("Construct personally defined outcomes...")
 pbar <- txtProgressBar(min = 0, max = nrow(summ), style = 3)
 
 for (line in 1:nrow(summ)) {
-  
+
   name <- summ[line, 1]
-  
+
   if (name == "Family_Heart_Disease_sum") {
-    
+
     ids <- d %>% select(f.eid)
     other <- grep(summ[line, 9], cols)
     o <- d %>% select(f.eid, any_of(names(d)[other])) %>% as.data.frame
@@ -124,50 +124,50 @@ for (line in 1:nrow(summ)) {
     odf[, tmp.name] <- 1
     odf <- merge(unique(ids), unique(odf), by = "f.eid", all.x = TRUE)
     d <- merge(d, odf, by = "f.eid", all.x = TRUE)
-    
+
   } else {
-    
+
     if (!is.na(summ[line, 2])) {
       meds <- grep(summ[line, 2], cols)
       tmp.name <- gsub("sum", "meds", name)
       d[, tmp.name] <- as.integer(apply(d[, ..meds], 1, function(r) any(r %in% c(grep(summ[line, 3], r, value = T)))))
     } # End if medication
-    
+
     if (!is.na(summ[line, 4])) {
       icd10 <- grep(summ[line, 4], cols)
       tmp.name <- gsub("sum", "icd10", name)
       d[, tmp.name] <- as.integer(apply(d[, ..icd10], 1, function(r) any(r %in% c(grep(summ[line, 5], r, value = T)))))
     } # End if ICD10
-    
+
     if (!is.na(summ[line, 6])) {
       death <- grep(summ[line, 6], cols)
       tmp.name <- gsub("sum", "death", name)
       d[, tmp.name] <- as.integer(apply(d[, ..death], 1, function(r) any(r %in% c(grep(summ[line, 5], r, value = T)))))
     } # End if death
-    
+
     if (!is.na(summ[line, 7])) {
       sr <- grep(summ[line, 7], cols)
       tmp.name <- gsub("sum", "sr", name)
       d[, tmp.name] <- as.integer(apply(d[, ..sr], 1, function(r) any(r %in% c(grep(summ[line, 8], r, value = T)))))
     } # End if self-reported
-    
+
     if (!is.na(summ[line, 9])) {
       other <- grep(summ[line, 9], cols)
       tmp.name <- gsub("sum", "other", name)
       d[, tmp.name] <- as.integer(apply(d[, ..other], 1, function(r) any(r %in% c(grep(summ[line, 10], r, value = T)))))
     } # End if other
-    
+
   } # Check for Family_Heart_Disease
-  
-  
+
+
   tmp <- d %>% select(f.eid, starts_with(gsub("sum", "", name)))
   tmp[, name] <- ifelse(rowSums(tmp[, 2:ncol(tmp)], na.rm = TRUE) >= 1, "Yes", "No")
   tmp <- tmp %>% select(f.eid, all_of(name))
   d <- merge(d, unique(tmp), by = "f.eid", all.x = TRUE)
   names(d)[ncol(d)] <- name
-  
+
   setTxtProgressBar(pbar, line)
-  
+
 } # End for-loop defining outcomes
 close(pbar)
 
@@ -178,77 +178,87 @@ message("Adding diagnosis dates...")
 pbar <- txtProgressBar(min = 0, max = nrow(summ), style = 3)
 
 for (line in 1:nrow(summ)) {
-  
+
   if (!is.na(summ[line, 4])) {
-    
+
     name <- summ[line, 1]
-    
+
     f <- d[get(name) == "Yes"]
     if (nrow(f) > 0) {
-      
+
       datelist <- list()
       for (i in 1:nrow(f)) {
-        
+
         # Selecting row
         x <- f[i, ]
-        
+
         # Identify columns in which diagnosis is
         datecolumn <- vector()
         icd <- c(base::strsplit(summ[line, 4], "[|]")[[1]], base::strsplit(summ[line, 6], "[|]")[[1]])
         icd <- icd[!icd %in% c("41201", "41204", "f.40002", "f.41201")]
         for (code in icd) {
           if (code == "41270") {
-            
+
             sel <- grep(code, cols)
             daf <- c(apply(x[,..sel], 1, function(r) which(r %in% grep(pattern = summ[line, 5], r, value = T))))
             datecolumn <- c(datecolumn, main_date[daf])
-            
+
           } else if (code == "41202") {
-            
+
             sel <- grep(code, cols)
             daf <- c(apply(x[,..sel], 1, function(r) which(r %in% grep(pattern = summ[line, 5], r, value = T))))
             datecolumn <- c(datecolumn, sec_date[daf])
-            
+
           } else if (code == "f.40001") {
-            
+
             sel <- grep(code, cols)
             daf <- c(apply(x[,..sel], 1, function(r) which(r %in% grep(pattern = summ[line, 5], r, value = T))))
             datecolumn <- c(datecolumn, death_date[daf])
-            
+
           } # End check for available date
-          
+
         } # End iteration diagnoses
-        
+
         # Select first date
         datesframe <- as.data.frame(subset(x, select = datecolumn))
         datesframe[names(datesframe)] <- lapply(datesframe[names(datesframe)], as.Date)
-        
+
         if (nrow(datesframe) > 0) {
-          
+
           r <- c(apply(datesframe, 1, function(r) min(r)))
           colnames(datesframe) <- as.character(1:ncol(datesframe))
-          
+
           date.name <- gsub("sum", "FirstDate", name)
           datelist[[i]] <- data.frame("f.eid" = x$f.eid, date.name = r, datesframe)
           names(datelist[[i]])[2] <- date.name
-          
+
         } # End check empty datesframe
-        
+
       } # End iteration rows subset
-      
+
       dateresults <- do.call(bind_rows, datelist)
-      colnames(dateresults) <- gsub("X", gsub("sum", "Date", name), 
+      colnames(dateresults) <- gsub("X", gsub("sum", "Date", name),
                                     colnames(dateresults))
       d <- left_join(d, unique(dateresults), by = "f.eid")
-      
+
     } # End if subsetting exists
-    
+
     setTxtProgressBar(pbar, line)
-    
+
   } # Check if defined by diagnoses
-  
+
 } # End iteration rows outcomes
 close(pbar)
+
+
+# Compare dates -----------------------------------------------------------
+
+f <- d %>% filter(Heart_Failure_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes") %>%
+		select(f.eid, ends_with("_sum"), ends_with("FirstDate"))
+f$Chronic_ischaemic_heart_disease_FirstDate <- as.Date(f$Chronic_ischaemic_heart_disease_FirstDate)
+f$Heart_Failure_FirstDate <- as.Date(f$Heart_Failure_FirstDate)
+f$HF_isch_diff <- as.numeric(f$Chronic_ischaemic_heart_disease_FirstDate - f$Heart_Failure_FirstDate)
+write.table(f, "data/processed/Diagnosis_dates.tsv", sep = "\t", quote = FALSE, row.names = FALSE, col.names = TRUE)
 
 
 # Renaming columns --------------------------------------------------------
@@ -264,7 +274,7 @@ for (l in 1:nrow(desc)) {
   id <- desc[l, 1] # fieldID
   nam <- desc[l, 2] # field description
   colnames(d) <- gsub(id, nam, colnames(d), fixed = TRUE)
-  
+
   setTxtProgressBar(pbar, l)
 } # end for-loop total
 rm(id, nam, l)
@@ -276,16 +286,16 @@ close(pbar)
 message("Averaging repeated measurements...")
 pbar <- txtProgressBar(min = 0, max = nrow(rep), style = 3)
 
-# There are some repeat measurements, and using this loop, the average will 
+# There are some repeat measurements, and using this loop, the average will
 # be taken. The measurements to be averaged are found in the rep-file and
 # this can of course be adapted where needed.
-# For example, all measurements of Systolic_blood_pressure_manual_reading at 
+# For example, all measurements of Systolic_blood_pressure_manual_reading at
 # instance 0 (column name: Systolic_blood_pressure_manual_reading.0.* where *
-# means any array number) will be averaged and the average column will have 
+# means any array number) will be averaged and the average column will have
 # the name: Systolic_blood_pressure_manual_reading.0_mean.
 for (line in 1:nrow(rep)) {
   # To calculate per instance, we iterate over the instances
-  for (inst in (0:20)) { 
+  for (inst in (0:20)) {
     x <- paste0(rep[line, ], ".", inst)
     temp <- dplyr::select(d, c(f.eid, dplyr::starts_with(x)))
     if (ncol(temp) > 1) {
@@ -296,9 +306,9 @@ for (line in 1:nrow(rep)) {
       break
     } # end ifelse check for instance loop
   } # end for-instance loop
-  
+
   setTxtProgressBar(pbar, line)
-  
+
 } # end-averaging loop
 rm(line, inst, x, temp)
 close(pbar)
@@ -319,7 +329,7 @@ for (line in 1:nrow(nas)) {
       temp <- merge(temp, unique(temp1), all = TRUE, by = "f.eid")
     } # end ifelse-loop for initiating new temporary df
   } # end for-loop iterating over dplyr::selecting columns
-  
+
   if (ncol(temp) > 1) {
     temp[nas[line, 1]] <- temp[, 2]
     for (c in 3:(ncol(temp)-1)) {
@@ -334,10 +344,10 @@ for (line in 1:nrow(nas)) {
 } # end for-loop
 rm(line, sels, s, temp, temp1, c, cols)
 
-# In this loop we will check whether Ethnic_background.0.0 is present in the 
-# df and if so, the information will be used to summarize. First, NA's will 
+# In this loop we will check whether Ethnic_background.0.0 is present in the
+# df and if so, the information will be used to summarize. First, NA's will
 # be replaced by any value in other instances of the same column and then
-# They will be summarized in less specific categories to make it more 
+# They will be summarized in less specific categories to make it more
 # readable.
 if ("Ethnic_background.0.0" %in% names(d)) {
   d$Ethnic_background.0.0[is.na(d$Ethnic_background.0.0)] <- d$Ethnic_background.1.0[is.na(d$Ethnic_background.0.0)]
@@ -366,12 +376,12 @@ if ("Height" %in% names(d) && "Weight" %in% names(d)) {
 } # end if-loop calculating BMI if columns exist
 
 # Take mean of automated and manual BP reading
-temp <- d %>% 
+temp <- d %>%
   select(f.eid, starts_with("Systolic_blood_pressure")) %>%
   select(f.eid, ends_with("0_mean"))
 temp$Systolic_blood_pressure_mean <- rowMeans(temp[, 2:ncol(temp)], na.rm = TRUE)
 d <- merge(d, unique(temp))
-temp <- d %>% 
+temp <- d %>%
   select(f.eid, starts_with("Diastolic_blood_pressure")) %>%
   select(f.eid, ends_with("0_mean"))
 temp$Diastolic_blood_pressure_mean <- rowMeans(temp[, 2:ncol(temp)], na.rm = TRUE)

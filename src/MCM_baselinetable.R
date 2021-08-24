@@ -90,8 +90,8 @@ df <- as.data.frame(df)
 df[fac.col] <- lapply(df[fac.col], as.factor)
 nn.col <- cols[!cols %in% fac.col]
 df$Sex <- factor(df$Sex, levels = c("Male", "Female"))
-df$Pheno[df$Heart_Failure_sum == "Yes" | df$Cardiomyopathy_sum == "Yes"] <- "Diagnosed"
-df$Pheno[df$Heart_Failure_sum == "No" & df$Cardiomyopathy_sum == "No"] <- "Non-Diagnosed"
+df$Pheno[df$Heart_Failure_sum == "Yes" | df$Cardiomyopathy_sum == "Yes" | df$HCM_sum == "Yes" | df$DCM_sum == "Yes"] <- "Diagnosed"
+df$Pheno[df$Heart_Failure_sum == "No" & df$Cardiomyopathy_sum == "No" & df$HCM_sum == "No" & df$DCM_sum == "No"] <- "Non-Diagnosed"
 df$Pheno <- as.factor(df$Pheno)
 
 # ocol <- vector()

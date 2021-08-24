@@ -64,7 +64,7 @@ for (cm in levels(df$CM)) {
   if (cm != "Controls") {
 
     f <- subset(df, CM == cm)
-    tmp <- perc_var(f, c("Gene_1")) %>%
+    tmp <- perc_var(f, c("Gene")) %>%
       na.omit() %>%
       mutate(perc = count / 200643)
     # if (cm %in% c("HCM", "DCM")) {
