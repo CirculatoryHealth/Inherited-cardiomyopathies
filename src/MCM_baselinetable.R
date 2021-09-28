@@ -58,6 +58,7 @@ n <- grep("Global", names(df))
 names(df)[n] <- "Global_wall_thickness"
 
 df$Septal_wall_thickness <- (df$Wall_thickness_segment_2 + df$Wall_thickness_segment_3 + df$Wall_thickness_segment_8 + df$Wall_thickness_segment_9 + df$Wall_thickness_segment_14) / 5
+df$Total_MET_minutes_per_week <- df$MET_minutes_per_week_for_moderate_activity.0.0 + df$MET_minutes_per_week_for_vigorous_activity.0.0 + df$MET_minutes_per_week_for_walking.0.0
 
 
 # Making Baselinetable ----------------------------------------------------
@@ -74,7 +75,7 @@ bp <- df %>% select(Total_Cholesterol, HDL, LDL,
                     contains("blood_pressure_mean")) %>% names()
 diag <- df %>% select(ends_with("sum")) %>% names()
 cols <- c("Sex", "Age_when_attended_assessment_centre.0.0", "Ethnicity",
-          "BMI", met, bp, diag, ecg, cmr, "CM")
+          "BMI", met, bp, diag, ecg, cmr, "CM", "Total_MET_minutes_per_week")
 
 # A new df (df) is created, with all columns listed in cols
 message("Selecting variables for baseline table")
@@ -92,8 +93,12 @@ df <- as.data.frame(df)
 df[fac.col] <- lapply(df[fac.col], as.factor)
 nn.col <- cols[!cols %in% fac.col]
 df$Sex <- factor(df$Sex, levels = c("Male", "Female"))
-df$Pheno[df$Heart_Failure_sum == "Yes" | df$Cardiomyopathy_sum == "Yes" | df$HCM_sum == "Yes" | df$DCM_sum == "Yes"] <- "Diagnosed"
-df$Pheno[df$Heart_Failure_sum == "No" & df$Cardiomyopathy_sum == "No" & df$HCM_sum == "No" & df$DCM_sum == "No"] <- "Non-Diagnosed"
+df$HFCM[df$Heart_Failure_sum == "Yes" | df$Cardiomyopathy_sum == "Yes" | df$HCM_sum == "Yes" | df$DCM_sum == "Yes"] <- "Yes"
+df$HFCM[df$Heart_Failure_sum == "No" & df$Cardiomyopathy_sum == "No" & df$HCM_sum == "No" & df$HCM_sum == "No"] <- "No"
+
+df$Pheno[df$Chronic_ischaemic_heart_disease_sum == "No" & df$HFCM == "Yes"] <- "Diagnosed"
+df$Pheno[df$Chronic_ischaemic_heart_disease_sum == "Yes" & df$HFCM == "Yes"] <- "Non-Diagnosed"
+df$Pheno[df$HFCM == "No"] <- "Non-Diagnosed"
 df$Pheno <- as.factor(df$Pheno)
 
 # ocol <- vector()
