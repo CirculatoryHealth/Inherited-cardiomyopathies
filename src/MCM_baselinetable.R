@@ -79,6 +79,8 @@ cols <- c("Sex", "Age_when_attended_assessment_centre.0.0", "Ethnicity",
 # A new df (df) is created, with all columns listed in cols
 message("Selecting variables for baseline table")
 df <- df %>% dplyr::select(f.eid, any_of(cols), ends_with("FirstDate"))
+df$Total_MET_minutes_per_week <- df$MET_minutes_per_week_for_walking.0.0 + df$MET_minutes_per_week_for_moderate_activity.0.0 + df$MET_minutes_per_week_for_vigorous_activity.0.0
+cols <- c(cols, "Total_MET_minutes_per_week") 
 
 
 # Now we'll create vectors with column names for the baseline-table.

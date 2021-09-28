@@ -223,7 +223,7 @@ else
     fi
   done
 
-  sed 's/0\///g' ${TEMP}/${DIS}_merge${NUM} | sed 's/NA/0/g' | sed 's/ /\t/g' > ${TEMP}/${DIS}_mutation_carriers_all.txt
+  sed 's/0\///g' ${TEMP}/${DIS}_merge${NUM} | sed 's/ NA/ 0/g' | sed 's/ /\t/g' > ${TEMP}/${DIS}_mutation_carriers_all.txt
   echo ""
   echo "Adding columns for MRI overlap"
   echo "ID LV" > ${DIR}/ukb_MRI_LV_ID.txt
