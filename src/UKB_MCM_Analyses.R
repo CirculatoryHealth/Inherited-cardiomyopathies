@@ -62,7 +62,7 @@ message("Calculating prevalence")
 prev <- data.table()
 for (cm in levels(df$CM)) {
   if (cm != "Controls") {
-
+    
     f <- subset(df, CM == cm)
     tmp <- perc_var(f, c("Gene")) %>%
       na.omit() %>%
@@ -82,9 +82,9 @@ for (cm in levels(df$CM)) {
       arrange(desc(Gene)) %>%
       mutate(prop = N / sum(tmp$N) * 100) %>%
       mutate(ypos = cumsum(prop) - 0.5 * prop)
-
+    
     source("src/Piechart_genes.R")
-
+    
   }
 }
 write.table(prev, "results/output/Prevalence.tsv", sep = "\t", quote = FALSE,
@@ -100,54 +100,54 @@ test <- list()
 pval <- data.frame(Phenotype = cvd)
 for (cm in levels(df$CM)) {
   if (cm != "Controls") {
-
+    
     f <- df %>% select(any_of(cvd), CM) %>% filter(CM %in% c(cm,  "Controls"))
     f$CM <- droplevels(f$CM)
-
+    
     fd <- df %>%
       select(any_of(cvd), Pheno, CM) %>%
       filter(CM %in% c(cm,  "Controls")) %>%
       filter(Pheno == "Diagnosed")
     fd$CM <- droplevels(fd$CM)
-
+    
     fh <- df %>%
       select(any_of(cvd), Pheno, CM) %>%
       filter(CM %in% c(cm,  "Controls")) %>%
       filter(Pheno == "Non-Diagnosed")
     fh$CM <- droplevels(fh$CM)
-
+    
     pa <- data.frame()
     for (x in cvd) {
       ps <- vector()
-
+      
       tmp <- f %>% dplyr::select(any_of(x), CM)
       test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
       ps <- c(ps, test[[x]]$p.value)
-
+      
       tryCatch( {
-
+        
         tmp <- fd %>% dplyr::select(any_of(x), CM)
         test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
         ps <- c(ps, test[[x]]$p.value)
-
+        
         tmp <- fh %>% dplyr::select(any_of(x), CM)
         test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
         ps <- c(ps, test[[x]]$p.value)
-
+        
       }, error = function(e) {
-
+        
         ps <- c(ps, NA, NA)
-
+        
       })
-
+      
       pa <- rbind(pa, ps)
-      # write.table(table(tmp), "results/output/CVD_enrichment_XTab.tsv",
-      #             sep = "\t", quote = FALSE, append = TRUE,
-      #             col.names = c(x, paste("Controls", cm, sep = "_")))
+      write.table(table(tmp), "results/output/CVD_enrichment_XTab.tsv",
+                  sep = "\t", quote = FALSE, append = TRUE,
+                  col.names = c(x, paste("Controls", cm, sep = "_")))
     }
     pval <- cbind(pval, pa)
     names(pval)[(ncol(pval)-2):ncol(pval)] <- c(cm, paste0(cm, "_diagnosed"), paste0(cm, "_nondiagnosed"))
-
+    
   }
 }
 write.table(pval, "results/output/CVD_enrichment_fisher.tsv", sep = "\t",
@@ -169,11 +169,14 @@ names(df)[n] <- "Global_wall_thickness"
 
 df$Septal_wall_thickness <- (df$Wall_thickness_segment_2 + df$Wall_thickness_segment_3 + df$Wall_thickness_segment_8 + df$Wall_thickness_segment_9 + df$Wall_thickness_segment_14) / 5
 
-cmr <- df %>% select(starts_with("RV"), starts_with("LV"), contains("Wall_thickness")) %>% select(-c("RV", "LV")) %>% names()
+cmr <- df %>% select(starts_with("RV"), starts_with("LV"), contains("Wall_thickness"), 
+                     contains("Ecc", ignore.case = FALSE), 
+                     contains("Ell", ignore.case = FALSE)) %>% 
+  select(-c("RV", "LV")) %>% names()
 ecg <- c("ECG_heart_rate.0_mean", "P_duration", "P_axis.2.0",
          "PQ_interval.2.0", "QRS_duration", "R_axis.2.0",
          "QTC_interval.2.0", "T_axis.2.0")
-met <- df %>% select(starts_with("MET")) %>% names()
+met <- df %>% select(contains("MET", ignore.case = FALSE)) %>% names()
 bp <- df %>% select(Total_Cholesterol, HDL, LDL,
                     contains("blood_pressure_mean")) %>% names()
 cols <- c("Age_when_attended_assessment_centre.0.0", "BMI", met, bp, ecg, cmr)
@@ -182,31 +185,72 @@ test <- list()
 pval <- data.frame(Phenotype = cols)
 for (cm in levels(df$CM)) {
   if (cm != "Controls") {
-
-    f <- df %>% select(CM, any_of(cols)) %>%
+    
+    f <- df %>% select(CM, Pheno, any_of(cols)) %>%
       filter(CM %in% c(cm,  "Controls")) %>% as.data.frame()
     f$CM <- droplevels(f$CM)
-    ps <- vector()
-    sta <- vector()
+    
+    fd <- f %>% filter(Pheno == "Diagnosed")
+    fd$CM <- droplevels(fd$CM)
+    
+    fh <- f %>% filter(Pheno == "Non-Diagnosed")
+    fh$CM <- droplevels(fh$CM)
+    
+    row <- data.frame()
+    
     for (x in names(f)) {
-      if (x != "CM") {
+      vals <- vector()
+      if (!x %in% c("CM", "Pheno")) {
         tmp <- subset(f, CM == cm)[, x]
         ref <- subset(f, CM == "Controls")[, x]
-        test[[x]] <- wilcox.test(tmp, ref)
-        ps <- c(ps, test[[x]]$p.value)
-        sta <- c(sta, test[[x]]$statistic)
+        tried <- try(wilcox.test(tmp, ref), silent = TRUE)
+        
+        if(inherits(tried, "try-error")) {
+          vals <- c(vals, NA, NA)
+        } else {
+          test[[x]] <- wilcox.test(tmp, ref)
+          vals <- c(vals, test[[x]]$p.value)
+          vals <- c(vals, test[[x]]$statistic)
+        }
+        
+        tmp <- subset(fd, CM == cm)[, x]
+        ref <- subset(fd, CM == "Controls")[, x]
+        tried <- try(wilcox.test(tmp, ref), silent = TRUE)
+        
+        if(inherits(tried, "try-error")) {
+          vals <- c(vals, NA, NA)
+        } else {
+          test[[x]] <- wilcox.test(tmp, ref)
+          vals <- c(vals, test[[x]]$p.value)
+          vals <- c(vals, test[[x]]$statistic)
+        }
+        
+        tmp <- subset(fh, CM == cm)[, x]
+        ref <- subset(fh, CM == "Controls")[, x]
+        tried <- try(wilcox.test(tmp, ref), silent = TRUE)
+        
+        if(inherits(tried, "try-error")) {
+          vals <- c(vals, NA, NA)
+        } else {
+          test[[x]] <- wilcox.test(tmp, ref)
+          vals <- c(vals, test[[x]]$p.value)
+          vals <- c(vals, test[[x]]$statistic)
+        }
+        row <- rbind(row, vals)
       } # End check for continuous variable
     } # End iteration variables
-    pval <- cbind(pval, ps)
-    names(pval)[ncol(pval)] <- paste0(cm, "_P")
-    pval <- cbind(pval, sta)
-    names(pval)[ncol(pval)] <- paste0(cm, "_statistic")
-
+    names(row) <- c(paste0(cm, "_P"), paste0(cm, "_statistic"),
+                    paste0(cm, "_Diag_P"), paste0(cm, "_Diag_statistic"),
+                    paste0(cm, "_NonDiag_P"), paste0(cm, "_NonDiag_statistic"))
+    pval <- cbind(pval, row)
+    
   } # End check CM-group
 } # End iteration CMs
-write.table(pval, "results/output/Differences_Continuous_Wilcox.tsv",
+write.table(pval, "results/output/Differences_Continuous_MWU.tsv",
             sep = "\t", quote = FALSE, row.names = FALSE)
 rm(cols, cvd, test, pval, f, ps, cm, x, tmp, ref, cmr, ecg, met, bp, sta)
+
+
 
 
 # Filtering CM/HF diagnosed -----------------------------------------------
