@@ -169,6 +169,14 @@ names(df)[n] <- "Global_wall_thickness"
 
 df$Septal_wall_thickness <- (df$Wall_thickness_segment_2 + df$Wall_thickness_segment_3 + df$Wall_thickness_segment_8 + df$Wall_thickness_segment_9 + df$Wall_thickness_segment_14) / 5
 
+n <- grep("wall_thickness", names(df), ignore.case = TRUE)
+df <- as.data.frame(df)
+for (col in n) {
+  t1 <- quantile(df[, col], 0.25, na.rm = TRUE) - (IQR(df[, col], na.rm = TRUE) * 3)
+  t2 <- quantile(df[, col], 0.75, na.rm = TRUE) + (IQR(df[, col], na.rm = TRUE) * 3)
+  
+  df[, col][df[, col] > t2 | df[, col] < t1 ] <- NA
+}
 cmr <- df %>% select(starts_with("RV"), starts_with("LV"), contains("Wall_thickness"), 
                      contains("Ecc", ignore.case = FALSE), 
                      contains("Ell", ignore.case = FALSE)) %>% 
@@ -181,6 +189,11 @@ bp <- df %>% select(Total_Cholesterol, HDL, LDL,
                     contains("blood_pressure_mean")) %>% names()
 cols <- c("Age_when_attended_assessment_centre.0.0", "BMI", met, bp, ecg, cmr)
 
+nn.col <- c("Age_when_attended_assessment_centre.0.0", "BMI", ecg, met,  
+            "peakEll4Ch", "TPKEcc", "peakEcc", "peakEll2Ch", "RVESV", "RVSV", 
+            "Septal_wall_thickness", "Global_wall_thickness", "LVEDM", "LVEDMi", 
+            "LVEDV", "LVEDV/RVEDV", "LVEDVi", "LVESV", "LVESVi", "LVMVR", 
+            "LVPPAFR", "LVSV", "LVSVi", "LV_RV_ESV", "LVEF")
 test <- list()
 pval <- data.frame(Phenotype = cols)
 for (cm in levels(df$CM)) {
@@ -200,17 +213,54 @@ for (cm in levels(df$CM)) {
     
     for (x in names(f)) {
       vals <- vector()
-      if (!x %in% c("CM", "Pheno")) {
+      if (!x %in% c("CM", "Pheno", nn.col)) {
+        tmp <- subset(f, CM == cm)[, x]
+        ref <- subset(f, CM == "Controls")[, x]
+        tried <- try(t.test(tmp, ref), silent = TRUE)
+        
+        if(inherits(tried, "try-error")) {
+          vals <- c(vals, NA, NA, "T")
+        } else {
+          test[[x]] <- t.test(tmp, ref)
+          vals <- c(vals, test[[x]]$p.value)
+          vals <- c(vals, test[[x]]$statistic, "T")
+        }
+        
+        tmp <- subset(fd, CM == cm)[, x]
+        ref <- subset(fd, CM == "Controls")[, x]
+        tried <- try(t.test(tmp, ref), silent = TRUE)
+        
+        if(inherits(tried, "try-error")) {
+          vals <- c(vals, NA, NA, "T")
+        } else {
+          test[[x]] <- t.test(tmp, ref)
+          vals <- c(vals, test[[x]]$p.value)
+          vals <- c(vals, test[[x]]$statistic, "T")
+        }
+        
+        tmp <- subset(fh, CM == cm)[, x]
+        ref <- subset(fh, CM == "Controls")[, x]
+        tried <- try(t.test(tmp, ref), silent = TRUE)
+        
+        if(inherits(tried, "try-error")) {
+          vals <- c(vals, NA, NA, "T")
+        } else {
+          test[[x]] <- t.test(tmp, ref)
+          vals <- c(vals, test[[x]]$p.value)
+          vals <- c(vals, test[[x]]$statistic, "T")
+        }
+        row <- rbind(row, vals)
+      } else if (!x %in% c("CM", "Pheno")) {
         tmp <- subset(f, CM == cm)[, x]
         ref <- subset(f, CM == "Controls")[, x]
         tried <- try(wilcox.test(tmp, ref), silent = TRUE)
         
         if(inherits(tried, "try-error")) {
-          vals <- c(vals, NA, NA)
+          vals <- c(vals, NA, NA, "MWU")
         } else {
           test[[x]] <- wilcox.test(tmp, ref)
           vals <- c(vals, test[[x]]$p.value)
-          vals <- c(vals, test[[x]]$statistic)
+          vals <- c(vals, test[[x]]$statistic, "MWU")
         }
         
         tmp <- subset(fd, CM == cm)[, x]
@@ -218,11 +268,11 @@ for (cm in levels(df$CM)) {
         tried <- try(wilcox.test(tmp, ref), silent = TRUE)
         
         if(inherits(tried, "try-error")) {
-          vals <- c(vals, NA, NA)
+          vals <- c(vals, NA, NA, "MWU")
         } else {
           test[[x]] <- wilcox.test(tmp, ref)
           vals <- c(vals, test[[x]]$p.value)
-          vals <- c(vals, test[[x]]$statistic)
+          vals <- c(vals, test[[x]]$statistic, "MWU")
         }
         
         tmp <- subset(fh, CM == cm)[, x]
@@ -230,23 +280,26 @@ for (cm in levels(df$CM)) {
         tried <- try(wilcox.test(tmp, ref), silent = TRUE)
         
         if(inherits(tried, "try-error")) {
-          vals <- c(vals, NA, NA)
+          vals <- c(vals, NA, NA, "MWU")
         } else {
           test[[x]] <- wilcox.test(tmp, ref)
           vals <- c(vals, test[[x]]$p.value)
-          vals <- c(vals, test[[x]]$statistic)
+          vals <- c(vals, test[[x]]$statistic, "MWU")
         }
         row <- rbind(row, vals)
-      } # End check for continuous variable
+        row[names(row)] <- lapply(row[names(row)], as.character)
+      } # End check for continuous normal variable
     } # End iteration variables
-    names(row) <- c(paste0(cm, "_P"), paste0(cm, "_statistic"),
-                    paste0(cm, "_Diag_P"), paste0(cm, "_Diag_statistic"),
-                    paste0(cm, "_NonDiag_P"), paste0(cm, "_NonDiag_statistic"))
+    names(row) <- c(paste0(cm, "_P"), paste0(cm, "_statistic"), 
+                    paste0(cm, "_test"), paste0(cm, "_Diag_P"), 
+                    paste0(cm, "_Diag_statistic"), paste0(cm, "_Diag_test"),
+                    paste0(cm, "_NonDiag_P"), paste0(cm, "_NonDiag_statistic"), 
+                    paste0(cm, "_NonDiag_test"))
     pval <- cbind(pval, row)
     
   } # End check CM-group
 } # End iteration CMs
-write.table(pval, "results/output/Differences_Continuous_MWU.tsv",
+write.table(pval, "results/output/Differences_Continuous.tsv",
             sep = "\t", quote = FALSE, row.names = FALSE)
 rm(cols, cvd, test, pval, f, ps, cm, x, tmp, ref, cmr, ecg, met, bp, sta)
 
