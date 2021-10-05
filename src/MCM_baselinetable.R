@@ -66,7 +66,9 @@ df$Total_MET_minutes_per_week <- df$MET_minutes_per_week_for_moderate_activity.0
 # The vectors are created with column names which we want to include in the
 # baseline-table. If a column name is not represented in the vector cols, it
 # will not be included in the baseline-table, so this should be changed here.
-cmr <- df %>% select(starts_with("RV"), starts_with("LV"), contains("Wall_thickness")) %>% names()
+cmr <- df %>% select(starts_with("RV"), starts_with("LV"), contains("Wall_thickness"), 
+                     contains("Ecc", ignore.case = FALSE), 
+                     contains("Ell", ignore.case = FALSE)) %>% names()
 ecg <- c("ECG_heart_rate.0_mean", "P_duration", "P_axis.2.0",
          "PQ_interval.2.0", "QRS_duration", "R_axis.2.0",
          "QTC_interval.2.0", "T_axis.2.0")
@@ -104,22 +106,31 @@ df$Pheno <- as.factor(df$Pheno)
 # ocol <- vector()
 # norm <- list()
 # for (n in nn.col) {
-#   vec <- na.omit(df_named[n])
+#   vec <- na.omit(df[n])
 #   norm[[n]] <- list()
 #   norm[[n]][["dens.plot"]] <- ggdensity(vec[,1])
 #   norm[[n]][["qq.plot"]] <- ggqqplot(vec[,1])
 #   norm[[n]][["test"]] <- ks.test(vec[,1], "pnorm")
-#
+# 
 #   if (norm[[n]][["test"]]$p.value < 0.05) {
 #     ocol <- c(ocol, n)
 #   } # Finish if-loop adding nonnormal variables
 # } # Finish for-loop iterating over non-factor columns
-
-# After manual inspection, some variables are removed anyways
+# 
+# # After manual inspection, some variables are removed anyways
 # rem <- c("Total_Cholesterol", "LDL", "Systolic_blood_pressure_mean",
 #          "Diastolic_blood_pressure_mean", "ECG_heart_rate.0_mean", "P_duration",
 #          "RVEF", "RVPFR", "LVPER", "LVPFR")
 # ocol <- ocol[!ocol %in% rem]
+con <- df %>% select(any_of(nn.col))
+p <- con %>% select_if(is.numeric) %>% tidyr::gather(cols, value) %>% 
+  ggplot(aes(x = value)) + 
+  geom_histogram(aes(y = ..density..)) +
+  facet_wrap(.~cols, scales = "free") +
+  labs(x = "Value", y = "Density", 
+       title = "TITEL") +
+  my_theme() + theme(text = element_text(size = 10))
+ggsave("results/figures/Distribution_continuous_data.svg")
 
 message("Creating the baseline tables")
 tab1 <- CreateTableOne(vars = cols, data = df, factorVars = fac.col,
@@ -139,20 +150,20 @@ exa <- print(taba, showAllLevels = FALSE, missing = TRUE, nonnormal = nn.col,
              formatOptions = list(big.mark = ","), quote = FALSE,
              noSpaces = TRUE, printToggle = FALSE)
 tabd <- CreateTableOne(vars = cols, data = dcm, factorVars = fac.col,
-                      strata = "Pheno", addOverall = TRUE)
+                       strata = "Pheno", addOverall = TRUE)
 exd <- print(tabd, showAllLevels = FALSE, missing = TRUE, nonnormal = nn.col,
-            formatOptions = list(big.mark = ","), quote = FALSE,
-            noSpaces = TRUE, printToggle = FALSE)
+             formatOptions = list(big.mark = ","), quote = FALSE,
+             noSpaces = TRUE, printToggle = FALSE)
 tabh <- CreateTableOne(vars = cols, data = hcm, factorVars = fac.col,
-                      strata = "Pheno", addOverall = TRUE)
+                       strata = "Pheno", addOverall = TRUE)
 exh <- print(tabh, showAllLevels = FALSE, missing = TRUE, nonnormal = nn.col,
-            formatOptions = list(big.mark = ","), quote = FALSE,
-            noSpaces = TRUE, printToggle = FALSE)
+             formatOptions = list(big.mark = ","), quote = FALSE,
+             noSpaces = TRUE, printToggle = FALSE)
 tabc <- CreateTableOne(vars = cols, data = con, factorVars = fac.col,
-                      strata = "Pheno", addOverall = TRUE)
+                       strata = "Pheno", addOverall = TRUE)
 exc <- print(tabc, showAllLevels = FALSE, missing = TRUE, nonnormal = nn.col,
-            formatOptions = list(big.mark = ","), quote = FALSE,
-            noSpaces = TRUE, printToggle = FALSE)
+             formatOptions = list(big.mark = ","), quote = FALSE,
+             noSpaces = TRUE, printToggle = FALSE)
 
 message("Saving data")
 write.csv(ex1, paste0(output, prefix, "_Table1.csv"))
