@@ -38,7 +38,7 @@ my_theme <- function() {
     axis.line = element_line(colour = "black"),
     panel.grid.major.y = element_line(colour = "gray90"),
     strip.background = element_rect(fill = "transparent", colour = "black"),
-    text = element_text(size = 20)
+    text = element_text(size = 15)
   )
 }
 
