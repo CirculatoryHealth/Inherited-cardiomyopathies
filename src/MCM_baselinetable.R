@@ -44,21 +44,22 @@ library(ggpubr)
 message("Loading data")
 df <- data.table(read.table(input, sep = "\t", header = TRUE, quote = ""))
 
+# Uncomment if needed: Selecting only certain genes for HCM
+# gen <- c("MYH7", "MYBPC3", "MYL2", "MYL3", "ACTC1", "TNNI3", "TNNT2", "TPM1",
+#          "CSRP3", "TNNC1", "JPH2"  )
+# hcm <- df %>% filter(CM == "HCM")
+# df <- df %>% filter(CM != "HCM")
+# hcm <- df %>% filter(!Gene_1 %in% gen)
+# df <- rbind(df, hcm)
 
 # CMR parameters ----------------------------------------------------------
 
-n <- grep("LVEDM.LVEDV", names(df))
-names(df)[n] <- "LVMVR"
-n <- grep("LV_RV_EDV", names(df))
+# n <- grep("LVEDM.LVEDV", names(df))
+# names(df)[n] <- "LVMVR"
+n <- grep("LVEDV.RVEDV", names(df))
 names(df)[n] <- "LVEDV/RVEDV"
 
-n <- grep("AHA", names(df))
-names(df)[n] <- gsub("AHA", "Wall_thickness_segment", names(df)[n])
-n <- grep("Global", names(df))
-names(df)[n] <- "Global_wall_thickness"
-
-df$Septal_wall_thickness <- (df$Wall_thickness_segment_2 + df$Wall_thickness_segment_3 + df$Wall_thickness_segment_8 + df$Wall_thickness_segment_9 + df$Wall_thickness_segment_14) / 5
-df$Total_MET_minutes_per_week <- df$MET_minutes_per_week_for_moderate_activity.0.0 + df$MET_minutes_per_week_for_vigorous_activity.0.0 + df$MET_minutes_per_week_for_walking.0.0
+# df$Total_MET_minutes_per_week <- df$MET_minutes_per_week_for_moderate_activity.0.0 + df$MET_minutes_per_week_for_vigorous_activity.0.0 + df$MET_minutes_per_week_for_walking.0.0
 
 
 # Making Baselinetable ----------------------------------------------------
@@ -77,20 +78,19 @@ bp <- df %>% select(Total_Cholesterol, HDL, LDL,
                     contains("blood_pressure_mean")) %>% names()
 diag <- df %>% select(ends_with("sum")) %>% names()
 cols <- c("Sex", "Age_when_attended_assessment_centre.0.0", "Ethnicity",
-          "BMI", met, bp, diag, ecg, cmr, "CM", "Total_MET_minutes_per_week")
+          "BMI", met, bp, diag, ecg, cmr, "CM", "Total_MET_minutes_per_week",
+          "ECG", "CMR")
 
 # A new df (df) is created, with all columns listed in cols
 message("Selecting variables for baseline table")
 df <- df %>% dplyr::select(f.eid, any_of(cols), ends_with("FirstDate"))
-df$Total_MET_minutes_per_week <- df$MET_minutes_per_week_for_walking.0.0 + df$MET_minutes_per_week_for_moderate_activity.0.0 + df$MET_minutes_per_week_for_vigorous_activity.0.0
-cols <- c(cols, "Total_MET_minutes_per_week") 
 
 
 # Now we'll create vectors with column names for the baseline-table.
 # fac.col contains all column names that should be regarded as factors
 # nn.col contains all columns that should be regarded as nonnormal (for now
 # these are all columns except the factors, but can be changed of course).
-fac.col <- c("Sex", "Ethnicity", diag, "CM")
+fac.col <- c("Sex", "Ethnicity", diag, "CM", "CMR", "ECG")
 df <- as.data.frame(df)
 df[fac.col] <- lapply(df[fac.col], as.factor)
 nn.col <- cols[!cols %in% fac.col]
@@ -128,7 +128,7 @@ p <- con %>% select_if(is.numeric) %>% tidyr::gather(cols, value) %>%
   geom_histogram(aes(y = ..density..)) +
   facet_wrap(.~cols, scales = "free") +
   labs(x = "Value", y = "Density", 
-       title = "TITEL") +
+       title = "Distribution continuous data") +
   my_theme() + theme(text = element_text(size = 10))
 ggsave("results/figures/Distribution_continuous_data.svg")
 

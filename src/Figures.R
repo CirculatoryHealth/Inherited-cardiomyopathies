@@ -18,19 +18,18 @@ pie
 
 
 # Create dataframe with desired variables
+ex <- c("LV", "RV")
 cmr <- df %>% select(starts_with("RV"), starts_with("LV"), contains("Wall_thickness"), 
                      contains("Ecc", ignore.case = FALSE), 
-                     contains("Ell", ignore.case = FALSE)) %>% names()
+                     contains("Ell", ignore.case = FALSE)) %>% 
+  select(-any_of(ex)) %>% names()
 new <- df %>% select(f.eid, BSA, CM, Pheno, any_of(cmr)) %>% filter(Pheno == "Non-Diagnosed")
-
-# Create right variables
-new$LVEDVi <- new$LVEDV / new$BSA
-new$RVEDVi <- new$RVEDV / new$BSA
 
 wt <- new %>% select(f.eid, contains("segment"))
 wt$Max_WT <- NA
 for (i in 1:nrow(wt)) {
   wt[i, "Max_WT"] <- max(wt[i, 2:(ncol(wt)-1)])
+  wt$Max_WT <- as.numeric(wt$Max_WT)
 }
 wt <- wt %>% select(f.eid, Max_WT)
 new <- merge(new, wt)
@@ -69,9 +68,11 @@ p2.1 <- ggplot(new, aes(x = factor(CM, levels = c("Controls", "ACM", "DCM", "HCM
   my_theme()
 
 p3 <- ggplot(new, aes(x = factor(CM, levels = c("Controls", "ACM", "DCM", "HCM")), 
-                      y = Max_WT)) +
+                      y = Max_WT), fill = factor(CM, levels = c("Controls", "ACM", "DCM", "HCM"))) +
   geom_boxplot(outlier.shape = 18) +
   labs(x = "Cardiomyopathy", y = "Maximum wall thickness (mm)") +
+  scale_fill_manual(breaks = c("Controls", "ACM", "DCM", "HCM"),
+                    values = c("green", "yellow", "blue", "red")) +
   my_theme()
 
 p4 <- ggplot(new, 
@@ -109,7 +110,9 @@ v1 <- draw.quad.venn(area1 = nrow(subset(acm, Heart_Failure_sum == "Yes")),
                n234 = nrow(subset(acm, Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")), 
                n1234 = nrow(subset(acm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")),
                fill = c("#ffd167", "#4cbd97", "#168ab2", "#ef476f"), 
-               lty = "blank", cat.cex = rep(3, 4), cex = rep(3, 15),
+               cat.cex = rep(3, 4), cex = rep(3, 15), alpha = rep(0.8, 4),
+               fontfamily = rep("Helvetica", 15), 
+               cat.fontfamily = rep("Helvetica", 4), 
                category = c("HF", "CM", "Ischaemia", "VA"))
 # ggsave("results/figures/ACM_venn.svg", v1)
 
@@ -131,7 +134,9 @@ v2 <- draw.quad.venn(area1 = nrow(subset(dcm, Heart_Failure_sum == "Yes")),
                n234 = nrow(subset(dcm, Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")), 
                n1234 = nrow(subset(dcm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")),
                fill = c("#ffd167", "#4cbd97", "#168ab2", "#ef476f"), 
-               lty = "blank", cat.cex = rep(3, 4), cex = rep(3, 15),
+               cat.cex = rep(3, 4), cex = rep(3, 15), alpha = rep(0.8, 4),
+               fontfamily = rep("Helvetica", 15), 
+               cat.fontfamily = rep("Helvetica", 4), 
                category = c("HF", "CM", "Ischaemia", "VA"))
 # ggsave("results/figures/DCM_venn.svg", v2)
        
@@ -153,9 +158,12 @@ v3 <- draw.quad.venn(area1 = nrow(subset(hcm, Heart_Failure_sum == "Yes")),
                n234 = nrow(subset(hcm, Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")), 
                n1234 = nrow(subset(hcm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")),
                fill = c("#ffd167", "#4cbd97", "#168ab2", "#ef476f"), 
-               lty = "blank", cat.cex = rep(3, 4), cex = rep(3, 15),
+               cat.cex = rep(3, 4), cex = rep(3, 15), alpha = rep(0.8, 4),
+               fontfamily = rep("Helvetica", 15), 
+               cat.fontfamily = rep("Helvetica", 4), 
                category = c("HF", "CM", "Ischaemia", "VA"))
 # ggsave("results/figures/HCM_venn.svg", v3)
 
-ggarrange(v1, v2, v3, labels = c("A) ACM", "B) DCM", "C) HCM"), ncol = 3)
-ggsave("results/figures/Fig4-Venn.svg", width = 30, height = 8)
+ggarrange(v1, v2, v3, labels = c("A) ACM", "B) DCM", "C) HCM"), ncol = 3,
+          font.label = list(size = 35, color = "black", face = "bold", family = "Helvetica"))
+ggsave("results/figures/Figure4-Venn.pdf", width = 30, height = 8)
