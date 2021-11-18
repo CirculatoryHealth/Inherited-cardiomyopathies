@@ -52,7 +52,7 @@ library(tableone)
 
 message("Loading data")
 df <- data.table(read.delim(input, header = TRUE, sep = "\t", stringsAsFactors = FALSE))
-lof <- readRDS("data/processed/MCM_gene_summary.rds")
+# lof <- readRDS("data/processed/MCM_gene_summary.rds")
 df$CM <- as.factor(df$CM)
 
 
@@ -95,7 +95,7 @@ rm(cm, f, tmp, new, dup, m, pie, prev)
 # Enrichment CVDs ---------------------------------------------------------
 
 message("Test for enrichment in certain phenotypes")
-cvd <- df %>% select(Sex, Ethnicity, ends_with("sum")) %>% names()
+cvd <- df %>% select(ends_with("sum")) %>% names()
 test <- list()
 pval <- data.frame(Phenotype = cvd)
 for (cm in levels(df$CM)) {
@@ -122,21 +122,39 @@ for (cm in levels(df$CM)) {
       
       tmp <- f %>% dplyr::select(any_of(x), CM)
       test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
-      ps <- c(ps, test[[x]]$p.value)
+      or <- test[[x]]$estimate
+      ci <- test[[x]]$conf.int
+      if (or < 1) {
+        or <- 1 / or
+        ci <- 1 / test[[x]]$conf.int
+      } 
+      ps <- c(ps, test[[x]]$p.value, or, ci)
       
       tryCatch( {
         
         tmp <- fd %>% dplyr::select(any_of(x), CM)
         test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
-        ps <- c(ps, test[[x]]$p.value)
+        or <- test[[x]]$estimate
+        ci <- test[[x]]$conf.int
+        if (or < 1) {
+          or <- 1 / or
+          ci <- 1 / test[[x]]$conf.int
+        } 
+        ps <- c(ps, test[[x]]$p.value, or, ci)
         
         tmp <- fh %>% dplyr::select(any_of(x), CM)
         test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
-        ps <- c(ps, test[[x]]$p.value)
+        or <- test[[x]]$estimate
+        ci <- test[[x]]$conf.int
+        if (or < 1) {
+          or <- 1 / or
+          ci <- 1 / test[[x]]$conf.int
+        } 
+        ps <- c(ps, test[[x]]$p.value, or, ci)
         
       }, error = function(e) {
         
-        ps <- c(ps, NA, NA)
+        ps <- c(ps, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA)
         
       })
       
@@ -146,28 +164,23 @@ for (cm in levels(df$CM)) {
                   col.names = c(x, paste("Controls", cm, sep = "_")))
     }
     pval <- cbind(pval, pa)
-    names(pval)[(ncol(pval)-2):ncol(pval)] <- c(cm, paste0(cm, "_diagnosed"), paste0(cm, "_nondiagnosed"))
+    names(pval)[(ncol(pval)-11):ncol(pval)] <- c(cm, paste0(cm, "_OR"), paste0(cm, "_LCI"), paste0(cm, "_UCI"),
+                                                paste0(cm, "_diagnosed"), paste0(cm, "_diag_OR"), paste0(cm, "_diag_LCI"), paste0(cm, "_diag_UCI"),
+                                                paste0(cm, "_nondiagnosed"), paste0(cm, "_nondiag_OR"), paste0(cm, "_nondiag_LCI"), paste0(cm, "_nondiag_UCI"))
     
   }
 }
 write.table(pval, "results/output/CVD_enrichment_fisher.tsv", sep = "\t",
             quote = FALSE, row.names = FALSE)
-rm(test, pval, f, ps, cm, tmp, x)
+rm(test, pval, f, ps, cm, tmp, x, pa, fh, fd, cvd)
 
 
 # Other statistics --------------------------------------------------------
 
-n <- grep("LVEDM.LVEDV", names(df))
-names(df)[n] <- "LVMVR"
-n <- grep("LV_RV_EDV", names(df))
+# n <- grep("LVEDM.LVEDV", names(df))
+# names(df)[n] <- "LVMVR"
+n <- grep("LVEDV.RVEDV", names(df))
 names(df)[n] <- "LVEDV/RVEDV"
-
-n <- grep("AHA", names(df))
-names(df)[n] <- gsub("AHA", "Wall_thickness_segment", names(df)[n])
-n <- grep("Global", names(df))
-names(df)[n] <- "Global_wall_thickness"
-
-df$Septal_wall_thickness <- (df$Wall_thickness_segment_2 + df$Wall_thickness_segment_3 + df$Wall_thickness_segment_8 + df$Wall_thickness_segment_9 + df$Wall_thickness_segment_14) / 5
 
 n <- grep("wall_thickness", names(df), ignore.case = TRUE)
 df <- as.data.frame(df)
@@ -177,6 +190,8 @@ for (col in n) {
   
   df[, col][df[, col] > t2 | df[, col] < t1 ] <- NA
 }
+rm(n, t1, t2, col)
+
 cmr <- df %>% select(starts_with("RV"), starts_with("LV"), contains("Wall_thickness"), 
                      contains("Ecc", ignore.case = FALSE), 
                      contains("Ell", ignore.case = FALSE)) %>% 
@@ -301,9 +316,8 @@ for (cm in levels(df$CM)) {
 } # End iteration CMs
 write.table(pval, "results/output/Differences_Continuous.tsv",
             sep = "\t", quote = FALSE, row.names = FALSE)
-rm(cols, cvd, test, pval, f, ps, cm, x, tmp, ref, cmr, ecg, met, bp, sta)
-
-
+rm(cols, cvd, test, pval, f, ps, cm, x, tmp, ref, cmr, ecg, met, bp, sta, vals, 
+   nn.col, fd, fh, row, tried)
 
 
 # Filtering CM/HF diagnosed -----------------------------------------------

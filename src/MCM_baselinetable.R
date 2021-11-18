@@ -52,13 +52,14 @@ df <- data.table(read.table(input, sep = "\t", header = TRUE, quote = ""))
 # hcm <- df %>% filter(!Gene_1 %in% gen)
 # df <- rbind(df, hcm)
 
+
 # CMR parameters ----------------------------------------------------------
 
 # n <- grep("LVEDM.LVEDV", names(df))
 # names(df)[n] <- "LVMVR"
 n <- grep("LVEDV.RVEDV", names(df))
 names(df)[n] <- "LVEDV/RVEDV"
-
+rm(n)
 # df$Total_MET_minutes_per_week <- df$MET_minutes_per_week_for_moderate_activity.0.0 + df$MET_minutes_per_week_for_vigorous_activity.0.0 + df$MET_minutes_per_week_for_walking.0.0
 
 
@@ -80,6 +81,7 @@ diag <- df %>% select(ends_with("sum")) %>% names()
 cols <- c("Sex", "Age_when_attended_assessment_centre.0.0", "Ethnicity",
           "BMI", met, bp, diag, ecg, cmr, "CM", "Total_MET_minutes_per_week",
           "ECG", "CMR")
+rm(cmr, ecg, met, bp, diag)
 
 # A new df (df) is created, with all columns listed in cols
 message("Selecting variables for baseline table")
@@ -131,6 +133,7 @@ p <- con %>% select_if(is.numeric) %>% tidyr::gather(cols, value) %>%
        title = "Distribution continuous data") +
   my_theme() + theme(text = element_text(size = 10))
 ggsave("results/figures/Distribution_continuous_data.svg")
+rm(con, p)
 
 message("Creating the baseline tables")
 tab1 <- CreateTableOne(vars = cols, data = df, factorVars = fac.col,
