@@ -70,7 +70,8 @@ rm(n)
 # will not be included in the baseline-table, so this should be changed here.
 cmr <- df %>% select(starts_with("RV"), starts_with("LV"), contains("Wall_thickness"), 
                      contains("Ecc", ignore.case = FALSE), 
-                     contains("Ell", ignore.case = FALSE)) %>% names()
+                     contains("Ell", ignore.case = FALSE)) %>% 
+  select(-c("RV", "LV")) %>% names()
 ecg <- c("ECG_heart_rate.0_mean", "P_duration", "P_axis.2.0",
          "PQ_interval.2.0", "QRS_duration", "R_axis.2.0",
          "QTC_interval.2.0", "T_axis.2.0")
@@ -81,7 +82,7 @@ diag <- df %>% select(ends_with("sum")) %>% names()
 cols <- c("Sex", "Age_when_attended_assessment_centre.0.0", "Ethnicity",
           "BMI", met, bp, diag, ecg, cmr, "CM", "Total_MET_minutes_per_week",
           "ECG", "CMR")
-rm(cmr, ecg, met, bp, diag)
+rm(cmr, ecg, met, bp)
 
 # A new df (df) is created, with all columns listed in cols
 message("Selecting variables for baseline table")

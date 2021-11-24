@@ -97,7 +97,11 @@ rm(cm, f, tmp, new, dup, m, pie, prev)
 message("Test for enrichment in certain phenotypes")
 cvd <- df %>% select(ends_with("sum")) %>% names()
 test <- list()
-pval <- data.frame(Phenotype = cvd)
+pval <- data.frame(Phenotype = rep("Outcomes", 9), OR = rep(NA, 9), 
+                   LCI = rep(NA, 9), UCI = rep(NA, 9), p = rep(NA, 9),
+                   CM = c("ACM", "ACM_Diagnosed", "ACM_NonDiag", 
+                          "DCM", "DCM_Diagnosed", "DCM_NonDiag", 
+                          "HCM", "HCM_Diagnosed", "HCM_NonDiag"))
 for (cm in levels(df$CM)) {
   if (cm != "Controls") {
     
@@ -116,7 +120,6 @@ for (cm in levels(df$CM)) {
       filter(Pheno == "Non-Diagnosed")
     fh$CM <- droplevels(fh$CM)
     
-    pa <- data.frame()
     for (x in cvd) {
       ps <- vector()
       
@@ -127,8 +130,10 @@ for (cm in levels(df$CM)) {
       if (or < 1) {
         or <- 1 / or
         ci <- 1 / test[[x]]$conf.int
+        ci <- ci[c(2,1)]
       } 
-      ps <- c(ps, test[[x]]$p.value, or, ci)
+      ps <- c(gsub("_sum", "", x), or, ci, test[[x]]$p.value, cm)
+      pval <- rbind(pval, ps)
       
       tryCatch( {
         
@@ -139,8 +144,10 @@ for (cm in levels(df$CM)) {
         if (or < 1) {
           or <- 1 / or
           ci <- 1 / test[[x]]$conf.int
+          ci <- ci[c(2,1)]
         } 
-        ps <- c(ps, test[[x]]$p.value, or, ci)
+        ps <- c(gsub("_sum", "", x), or, ci, test[[x]]$p.value, paste0(cm, "_Diagnosed"))
+        pval <- rbind(pval, ps)
         
         tmp <- fh %>% dplyr::select(any_of(x), CM)
         test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
@@ -149,30 +156,30 @@ for (cm in levels(df$CM)) {
         if (or < 1) {
           or <- 1 / or
           ci <- 1 / test[[x]]$conf.int
+          ci <- ci[c(2,1)]
         } 
-        ps <- c(ps, test[[x]]$p.value, or, ci)
+        ps <- c(gsub("_sum", "", x), or, ci, test[[x]]$p.value, paste0(cm, "_NonDiag"))
+        pval <- rbind(pval, ps)
         
       }, error = function(e) {
         
-        ps <- c(ps, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA)
+        ps <- c(gsub("_sum", "", x), NA, NA, NA, paste0(cm, "_Diagnosed"))
+        pval <- rbind(pval, ps)
+        ps <- c(gsub("_sum", "", x), NA, NA, NA, paste0(cm, "_NonDiag"))
+        pval <- rbind(pval, ps)
         
       })
       
-      pa <- rbind(pa, ps)
       write.table(table(tmp), "results/output/CVD_enrichment_XTab.tsv",
                   sep = "\t", quote = FALSE, append = TRUE,
                   col.names = c(x, paste("Controls", cm, sep = "_")))
     }
-    pval <- cbind(pval, pa)
-    names(pval)[(ncol(pval)-11):ncol(pval)] <- c(cm, paste0(cm, "_OR"), paste0(cm, "_LCI"), paste0(cm, "_UCI"),
-                                                paste0(cm, "_diagnosed"), paste0(cm, "_diag_OR"), paste0(cm, "_diag_LCI"), paste0(cm, "_diag_UCI"),
-                                                paste0(cm, "_nondiagnosed"), paste0(cm, "_nondiag_OR"), paste0(cm, "_nondiag_LCI"), paste0(cm, "_nondiag_UCI"))
-    
+
   }
 }
 write.table(pval, "results/output/CVD_enrichment_fisher.tsv", sep = "\t",
             quote = FALSE, row.names = FALSE)
-rm(test, pval, f, ps, cm, tmp, x, pa, fh, fd, cvd)
+rm(test, pval, f, ps, cm, tmp, x, fh, fd, cvd)
 
 
 # Other statistics --------------------------------------------------------
