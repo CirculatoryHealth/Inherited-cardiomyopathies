@@ -34,6 +34,23 @@ my_theme <- function() {
     legend.background = element_rect(fill = "transparent"),
     legend.box.background = element_rect(fill = "transparent", colour = NA),
     legend.key = element_rect(fill = "transparent", colour = NA),
+    legend.key.size = unit(.2, "cm"),
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.line = element_line(colour = "black"),
+    panel.grid.major.y = element_line(colour = "gray90"),
+    strip.background = element_rect(fill = "transparent", colour = "black"),
+    text = element_text(size = 4),
+    line = element_line(size = .2),
+  )
+}
+
+pc_theme <- function() {
+  theme(
+    panel.background = element_rect(fill = "transparent"),
+    plot.background = element_rect(fill = "transparent", color = NA),
+    legend.background = element_rect(fill = "transparent"),
+    legend.box.background = element_rect(fill = "transparent", colour = NA),
+    legend.key = element_rect(fill = "transparent", colour = NA),
     plot.title = element_text(hjust = 0.5, face = "bold"),
     axis.line = element_line(colour = "black"),
     panel.grid.major.y = element_line(colour = "gray90"),
