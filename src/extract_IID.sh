@@ -228,8 +228,8 @@ else
   echo "Adding columns for MRI overlap"
   echo "ID LV" > ${DIR}/ukb_MRI_LV_ID.txt
   echo "ID RV" > ${DIR}/ukb_MRI_RV_ID.txt
-  awk '{print $1, "yes"}' ${DIR}/ukb_MRI_LV_IID_clean.txt >> ${DIR}/ukb_MRI_LV_ID.txt
-  awk '{print $1, "yes"}' ${DIR}/ukb_MRI_RV_IID_clean.txt >> ${DIR}/ukb_MRI_RV_ID.txt
+  awk '{print $1, "yes"}' ${TEMP}/ukb_MRI_LV_IID_clean.txt >> ${DIR}/ukb_MRI_LV_ID.txt
+  awk '{print $1, "yes"}' ${TEMP}/ukb_MRI_RV_IID_clean.txt >> ${DIR}/ukb_MRI_RV_ID.txt
 
   bin/merge_tables.pl --file1 ${DIR}/ukb_MRI_LV_ID.txt --file2 ${TEMP}/${DIS}_mutation_carriers_all.txt --index ID > ${TEMP}/${DIS}_lv
   bin/merge_tables.pl --file1 ${DIR}/ukb_MRI_RV_ID.txt --file2 ${TEMP}/${DIS}_lv --index ID > ${TEMP}/${DIS}_SNPs_MRI.txt
