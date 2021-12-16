@@ -67,40 +67,20 @@ script_copyright_message() {
 	echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 }
 
-script_arguments_error() {
-	echoerror "$1" # ERROR MESSAGE
-  echoerror "- Argument #1   --  Disease to perform analysis for, could be 'DCM'"
-  echoerror "- Argument #2   --  Suffix of the output file, could be 'DCM'"
-	echoerror ""
-	echoerror "An example command would be: clean_pheno.sh [arg1: DCM]."
-	echoerror "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-  	# The wrong arguments are passed, so we'll exit the script now!
-  	exit 1
-}
+ROOT=$(pwd)
 
-if [[ $# -lt 2 ]]; then
-  echo "Error, number of arguments found "$#"."
-  script_arguments_error "You must supply [1] correct arguments when running this script"
-
-else
-
-  DIR="$1"
-  ROOT=$(pwd)
-
-  echo "Making phenotype file for the controls"
-  bin/merge_tables.pl --file1 data/temp/WES_MRI_MCM_phenotypes.txt --file2 ${DIR}/Control_IDs.tsv --index f.eid | sed 's/ /\t/g' > data/raw/Controls_full.tsv
-  echo ""
-  echo "Combining the phenotype files"
-  Rscript --vanilla ${ROOT}/src/Combine_pheno.R data/temp/ _full.tsv MCM_raw_full
-  echo ""
-  echo "Summarizing genetic information"
-  Rscript --vanilla ${ROOT}/src/MCM_gene_summary.R data/raw/MCM_raw_full.rds data/raw data/temp/ MCM
-  bin/merge_tables.pl --file1 data/processed/All_SNP_IID.txt --file2 data/temp/MCM_gene_summary.tsv --index f.eid | sort -ur | sed 's/ /\t/g' > data/processed/MCM_gene_summary.tsv
-  echo ""
-  echo "Cleaning up the phenotype file"
-  Rscript --vanilla ${ROOT}/src/MCM_pheno_clean.R data/raw/MCM_raw_full.rds data/raw data/processed/ MCM
-  echo ""
-  echo "Merging the cleaned files"
-  bin/merge_tables.pl --file1 data/processed/MCM_gene_summary.tsv --file2 data/processed/MCM_cleaned.tsv --index f.eid | sed 's/ /\t/g' > data/processed/MCM_final_pheno.tsv
-
-fi
+echo "Making phenotype file for the controls"
+bin/merge_tables.pl --file1 data/temp/WES_MRI_MCM_phenotypes.txt --file2 ${DIR}/Control_IDs.tsv --index f.eid | sed 's/ /\t/g' > data/raw/Controls_full.tsv
+echo ""
+echo "Combining the phenotype files"
+Rscript --vanilla ${ROOT}/src/Combine_pheno.R data/temp/ _full.tsv MCM_raw_full
+echo ""
+echo "Summarizing genetic information"
+Rscript --vanilla ${ROOT}/src/MCM_gene_summary.R data/raw/MCM_raw_full.rds data/raw data/temp/ MCM
+bin/merge_tables.pl --file1 data/processed/All_SNP_IID.txt --file2 data/temp/MCM_gene_summary.tsv --index f.eid | sort -ur | sed 's/ /\t/g' > data/processed/MCM_gene_summary.tsv
+echo ""
+echo "Cleaning up the phenotype file"
+Rscript --vanilla ${ROOT}/src/MCM_pheno_clean.R data/raw/MCM_raw_full.rds data/raw data/processed/ MCM
+echo ""
+echo "Merging the cleaned files"
+bin/merge_tables.pl --file1 data/processed/MCM_gene_summary.tsv --file2 data/processed/MCM_cleaned.tsv --index f.eid | sed 's/ /\t/g' > data/processed/MCM_final_pheno.tsv

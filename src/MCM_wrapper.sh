@@ -70,23 +70,21 @@ script_copyright_message() {
 script_arguments_error() {
 	echoerror "$1" # ERROR MESSAGE
   echoerror "- Argument #1   --  Root path, from which this script will be executed, could be '/hpc/dhl_ec/mvanvugt/UKBB'"
-  echoerror "- Argument #2   --  OPTIONAL: File name and path of/to the overlapping indels, could be '/hpc/dhl_ec/mvanvugt/UKBB/indels.txt' OR 'no' when this file still has to be created"
 	echoerror ""
-	echoerror "An example command would be: MCM_wrapper.sh [arg1: /hpc/dhl_ec/mvanvugt/UKBB] [arg3: /hpc/dhl_ec/mvanvugt/UKBB/indels.txt]."
+	echoerror "An example command would be: MCM_wrapper.sh [arg1: /hpc/dhl_ec/mvanvugt/UKBB]."
 	echoerror "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   	# The wrong arguments are passed, so we'll exit the script now!
   	exit 1
 }
 
-if [[ $# -lt 3 ]]; then
+if [[ $# -lt 1 ]]; then
   echo "Error, number of arguments found "$#"."
-  script_arguments_error "You must supply [3] correct arguments when running this script"
+  script_arguments_error "You must supply [1] correct arguments when running this script"
 
 else
 
   ROOT="$1"
   cd ${ROOT}
-  INDEL=${2:-no}
   DATE=$(date +'%d-%m-%Y')
 
   ### TOOLS
@@ -155,26 +153,22 @@ else
 
   echo "Compiling list of SNPs and from ClinVar and VKGL per phenotype"
   echo "Extracting participants carrying (likely) pathogenic mutations"
-  DEP2a=$(sbatch --output="${LOGS}/ACM_prep_SNPs.log" ${SCRIPT}/prep_SNPs.sh ACM data/raw/ACM_clinvar_result_LP.txt data/raw/ACM_VKGL.txt ${LOG} --time=30:00 | sed 's/Submitted batch job //')
-  DEP3a=$(sbatch --dependency=afterok:${DEP2a} --output="${LOGS}/ACM_extract_IID.log" ${SCRIPT}/extract_IID.sh ACM data/raw/ACM_indels.txt ${LOG} --time=01:00:00 --mem 40G | sed 's/Submitted batch job //')
-  DEP2d=$(sbatch --dependency=afterok:${DEP3a} --output="${LOGS}/DCM_prep_SNPs.log" ${SCRIPT}/prep_SNPs.sh DCM data/raw/DCM_clinvar_result_LP.txt data/raw/DCM_VKGL.txt ${LOG} --time=30:00 | sed 's/Submitted batch job //')
-  DEP3d=$(sbatch --dependency=afterok:${DEP2d} --output="${LOGS}/DCM_extract_IID.log" ${SCRIPT}/extract_IID.sh DCM data/raw/DCM_indels.txt ${LOG} --time=01:00:00 --mem 40G | sed 's/Submitted batch job //')
-  DEP2h=$(sbatch --dependency=afterok:${DEP3d} --output="${LOGS}/HCM_prep_SNPs.log" ${SCRIPT}/prep_SNPs.sh HCM data/raw/HCM_clinvar_result_LP.txt data/raw/HCM_VKGL.txt ${LOG} --time=30:00 | sed 's/Submitted batch job //')
-  DEP3h=$(sbatch --dependency=afterok:${DEP2h} --output="${LOGS}/HCM_extract_IID.log" ${SCRIPT}/extract_IID.sh HCM data/raw/HCM_indels.txt ${LOG} --time=01:00:00 --mem 40G | sed 's/Submitted batch job //')
+  DEP2a=$(sbatch --time=30:00 --output="${LOGS}/ACM_prep_SNPs.log" ${SCRIPT}/prep_SNPs.sh ACM data/raw/ACM_clinvar_result_LP.txt data/raw/ACM_VKGL.txt ${LOG} | sed 's/Submitted batch job //')
+  DEP3a=$(sbatch --time=01:00:00 --mem 40G --dependency=afterok:${DEP2a} --output="${LOGS}/ACM_extract_IID.log" ${SCRIPT}/extract_IID.sh ACM data/raw/ACM_indels.txt ${LOG} | sed 's/Submitted batch job //')
+  DEP2d=$(sbatch --time=30:00 --dependency=afterok:${DEP3a} --output="${LOGS}/DCM_prep_SNPs.log" ${SCRIPT}/prep_SNPs.sh DCM data/raw/DCM_clinvar_result_LP.txt data/raw/DCM_VKGL.txt ${LOG} | sed 's/Submitted batch job //')
+  DEP3d=$(sbatch --time=01:00:00 --mem 40G --dependency=afterok:${DEP2d} --output="${LOGS}/DCM_extract_IID.log" ${SCRIPT}/extract_IID.sh DCM data/raw/DCM_indels.txt ${LOG}| sed 's/Submitted batch job //')
+  DEP2h=$(sbatch --time=30:00 --dependency=afterok:${DEP3d} --output="${LOGS}/HCM_prep_SNPs.log" ${SCRIPT}/prep_SNPs.sh HCM data/raw/HCM_clinvar_result_LP.txt data/raw/HCM_VKGL.txt ${LOG} | sed 's/Submitted batch job //')
+  DEP3h=$(sbatch --time=01:00:00 --mem 40G --dependency=afterok:${DEP2h} --output="${LOGS}/HCM_extract_IID.log" ${SCRIPT}/extract_IID.sh HCM data/raw/HCM_indels.txt ${LOG} | sed 's/Submitted batch job //')
   echo ""
-  if [[ ${INDEL} == "no" ]]; then
-    echobold "No file with overlapping indels provided, exiting now to make it manually or provide it"
-    exit 0
-  fi
 
   echo ""
   echo "Preparing full phenotype file"
-  DEP5a=$(sbatch --dependency=afterok:${DEP3a} --output="${LOGS}/ACM_phenish.log" ${SCRIPT}/phenish.sh ACM full.tsv --time=01:30:00 --mem 100G | sed 's/Submitted batch job //')
-  DEP5d=$(sbatch --dependency=afterok:${DEP3d} --output="${LOGS}/DCM_phenish.log" ${SCRIPT}/phenish.sh DCM full.tsv --time=01:30:00 --mem 100G | sed 's/Submitted batch job //')
-  DEP5h=$(sbatch --dependency=afterok:${DEP3h} --output="${LOGS}/HCM_phenish.log" ${SCRIPT}/phenish.sh HCM full.tsv --time=01:30:00 --mem 100G | sed 's/Submitted batch job //')
+  DEP5a=$(sbatch --time=01:30:00 --mem 100G --dependency=afterok:${DEP3a} --output="${LOGS}/ACM_phenish.log" ${SCRIPT}/phenish.sh ACM ${OUTPUT}/${OUTPUT_FILE_NAME}_ukb_phenotypes.tab full.tsv | sed 's/Submitted batch job //')
+  DEP5d=$(sbatch --time=01:30:00 --mem 100G --dependency=afterok:${DEP3d} --output="${LOGS}/DCM_phenish.log" ${SCRIPT}/phenish.sh DCM ${OUTPUT}/${OUTPUT_FILE_NAME}_ukb_phenotypes.tab full.tsv | sed 's/Submitted batch job //')
+  DEP5h=$(sbatch --time=01:30:00 --mem 100G --dependency=afterok:${DEP3h} --output="${LOGS}/HCM_phenish.log" ${SCRIPT}/phenish.sh HCM ${OUTPUT}/${OUTPUT_FILE_NAME}_ukb_phenotypes.tab full.tsv | sed 's/Submitted batch job //')
   echo ""
   echo "Getting randomly matched IDs for the controls"
-  DEP6=$(sbatch --dependency=afterok:${DEP5a},${DEP5d},${DEP5h} --output="${LOGS}/match_controls.Rlog" --wrap="Rscript --vanilla Match_controls.R data/raw _full.txt results/figures/UKB_MCM_Summary.pptx" --time=30:00)
+  DEP6=$(sbatch --time=30:00 --dependency=afterok:${DEP5a},${DEP5d},${DEP5h} --output="${LOGS}/match_controls.Rlog" --wrap="Rscript --vanilla Match_controls.R data/raw _full.txt results/figures/UKB_MCM_Summary.pptx")
   echo ""
   echo "Combining and cleaning up phenotypes"
   DEP7=$(sbatch --dependency=afterok:${DEP6} --output="${LOGS}/clean_pheno.log" ${SCRIPT}/clean_pheno.sh)
