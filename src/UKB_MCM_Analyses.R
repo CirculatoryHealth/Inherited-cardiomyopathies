@@ -97,6 +97,16 @@ rm(cm, f, tmp, new, dup, m, pie, prev)
 
 # Making extra groups -----------------------------------------------------
 
+# For subanalysis without the two most frequent HCM SNPs, we remove these from 
+# the dataframe. 
+# Comment this section out for regular analysis
+hcm <- df %>% filter(CM == "HCM") %>% filter(SNP != "11:47332274:D:25") %>%
+  filter(SNP != "1:201359245:G:A")
+new <- df %>% filter(CM %in% c("ACM", "DCM", "Controls"))
+sub <- rbind(new, hcm)
+# df <- sub
+rm(hcm, new)
+
 # For subanalyses we make also groups of the overlapping individuals between CMs
 # and two groups of diagnosed and non-diagnosed people (with and without controls)
 # Comment this section out if only CMs should be analysed
@@ -338,7 +348,7 @@ for (cm in c(prim, sec)) {
 pval[, c("Phenotype", "test", "CM")] <- lapply(pval[, c("Phenotype", "test", "CM")], as.factor)
 pval[, c("Estimate", "LCI", "UCI", "p")] <- lapply(pval[, c("Estimate", "LCI", "UCI", "p")], as.numeric)
 
-write.table(pval, "results/output/Difference_testing.tsv", sep = "\t",
+write.table(pval, "results/output/Difference_testing_v3.tsv", sep = "\t",
             quote = FALSE, row.names = FALSE)
 rm(cols, test, f, cm, x, cmr, ecg, met, bp, vals, eff, tmp, fh, 
    tried, cont, dia, ci, cvd, or, ps)
@@ -380,12 +390,12 @@ ggplot(all, aes(x = p)) +
   geom_histogram(aes(y = ..density..), color = "black", fill = "grey", size = .2) +
   geom_hline(yintercept = 1, size = .2) +
   facet_wrap(~Group) +
-  geom_text(data = ks, y = 4.9, label = ks$label, size = 1) +
+  geom_text(data = ks, y = 4.7, label = ks$label, size = 1) +
   labs(x = "p-value", y = "Density") +
   my_theme() 
-ggsave("results/figures/Multiple_testing_distribution.svg", width = 8 * pix, height =  5  * pix)
+ggsave("results/figures/Multiple_testing_distribution_v3.svg", width = 8 * pix, height =  5  * pix)
 
- # See 
+# See 
 cum <- NULL
 for (x in levels(pval$Phenotype)) {
   new <- data.frame(Phenotype = x, Comparison = "CM-Controls", Ratio = NA)
