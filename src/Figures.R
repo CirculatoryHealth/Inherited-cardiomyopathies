@@ -4,6 +4,7 @@ library(ggpubr)
 library(plotly)
 library(forestplot)
 library(VennDiagram)
+library(svglite)
 source("src/functions.R")
 pix <- 0.393700787
 
@@ -35,12 +36,14 @@ for (i in pheno) {
 }
 text[, 1] <- gsub("_", " ", text[, 1])
 text[,1][text[, 1] == "Heart Failure"] <- "Heart failure"
+text[,1][text[, 1] == "Angina"] <- "Angina pectoris"
+text[,1][text[, 1] == "Chronic ischaemic heart disease"] <- "Chronic ischemic heart disease"
 text[,1][text[, 1] == "Heart Arrhythmia"] <- "Heart arrhythmia"
 text[,1][text[, 1] == "Cardiovascular Death"] <- "Cardiovascular death"
 
 svglite("results/figures/Figure3-Forest_plot.svg", width = 10 * pix, height = 8 * pix)
 dat %>% group_by(CM) %>% 
-  forestplot(labeltext = text, mean = OR, lower = LCI, upper = UCI, zero = 1, 
+  forestplot(labeltext = text, mean = Estimate, lower = LCI, upper = UCI, zero = 1, 
              fn.ci_norm = c(fpDrawNormalCI, fpDrawDiamondCI, fpDrawCircleCI),
              shapes_gp = fpShapesGp(box = c("#ffd167", "#168ab2", "#ef476f") %>% 
                                       lapply(function(x) gpar(fill = x, col = x)),
@@ -53,6 +56,7 @@ dat %>% group_by(CM) %>%
                               ticks = gpar(cex= .3), legend = gpar(cex = .3)),
              is.summary = c(TRUE, rep(FALSE, 18)), xlab = "Odds ratio (95% CI)")
 dev.off()
+rm(dat, temp, text, i, pheno, t)
 
 
 # Venn Diagram phenotypes -------------------------------------------------
@@ -147,7 +151,8 @@ cmr <- df %>% select(starts_with("RV"), starts_with("LV"), contains("Wall_thickn
                      contains("Ecc", ignore.case = FALSE), 
                      contains("Ell", ignore.case = FALSE)) %>% 
   select(-any_of(ex)) %>% names()
-new <- df %>% select(f.eid, BSA, CM, Pheno, Sex, any_of(cmr)) %>% filter(Pheno == "Non-Diagnosed")
+new <- df %>% select(f.eid, BSA, CM, Pheno, Sex, any_of(cmr)) %>% 
+  filter(Pheno == "Non-Diagnosed") %>% filter(CM %in% c("Controls", "ACM", "DCM", "HCM"))
 
 wt <- new %>% select(f.eid, contains("segment"))
 wt$Max_WT <- NA
@@ -177,7 +182,7 @@ rm(wt, cmr, ex, i)
   geom_boxplot(outlier.shape = 18, outlier.size = .4, alpha = 0.9, 
                lwd = .2, fatten = .8) +
   labs(x = "Cardiomyopathy", y = "LVEF (%)") +
-  annotate("segment", x = c(1, 1, 3), xend = c(3, 1, 3), 
+  annotate("segment", x = c(1, 1, 3), xend = c(3, 1, 3),
            y = c(90, 88, 88), yend = c(90, 90, 90), lwd = .2) +
   annotate("text", x = 2, y = 92, label = "p=0.009", size = 1) +
   scale_fill_manual(breaks = c("Controls", "ACM", "DCM", "HCM"),
@@ -194,7 +199,7 @@ p1.1 <- ggplot(new,
   geom_boxplot(outlier.shape = 18, outlier.size = .4, alpha = 0.9, 
                lwd = .2, fatten = .8) +
   labs(x = "Cardiomyopathy", y = "RVEF (%)") +
-  annotate("segment", x = c(1, 1, 4), xend = c(4, 1, 4), 
+  annotate("segment", x = c(1, 1, 4), xend = c(4, 1, 4),
            y = c(92, 90, 90), yend = c(92, 92, 92), lwd = .2) +
   annotate("text", x = 2.5, y = 94, label = "p=0.034", size = 1) +
   scale_fill_manual(breaks = c("Controls", "ACM", "DCM", "HCM"),
@@ -225,7 +230,7 @@ p2.1 <- ggplot(new,
   geom_boxplot(outlier.shape = 18, outlier.size = .4, alpha = 0.9, 
                lwd = .2, fatten = .8) +
   labs(x = "Cardiomyopathy", y = "RVEDVi (ml/m2)")  +
-  annotate("segment", x = c(1, 1, 3), xend = c(3, 1, 3), 
+  annotate("segment", x = c(1, 1, 3), xend = c(3, 1, 3),
            y = c(166, 160, 160), yend = c(166, 166, 166), lwd = .2) +
   annotate("text", x = 2, y = 170, label = "p=0.048", size = 1) +
   scale_fill_manual(breaks = c("Controls", "ACM", "DCM", "HCM"),
@@ -238,7 +243,7 @@ p3 <- ggplot(new,
              aes(x = factor(CM, levels = c("Controls", "ACM", "DCM", "HCM"),
                             labels = c("Controls G-P-", "ACM G+P-", "DCM G+P-", 
                                        "HCM G+P-")), 
-                 y = Max_WT, fill = CM)) +
+                 y = Max_wall_thickness, fill = CM)) +
   geom_boxplot(outlier.shape = 18, outlier.size = .4, alpha = 0.9, 
                lwd = .2, fatten = .8) +
   labs(x = "Cardiomyopathy", y = "Maximum wall thickness (mm)") +
@@ -256,7 +261,7 @@ p4 <- ggplot(new,
   geom_boxplot(outlier.shape = 18, outlier.size = .4, alpha = 0.9, 
                lwd = .2, fatten = .8) +
   labs(x = "Cardiomyopathy", y = "Peak longitudinal strain (%)") +
-  annotate("segment", x = c(1, 1, 3), xend = c(3, 1, 3), 
+  annotate("segment", x = c(1, 1, 3), xend = c(3, 1, 3),
            y = c(-5, -7, -7), yend = c(-5, -5, -5), lwd = .2) +
   annotate("text", x = 2, y = -4, label = "p=0.009", size = 1) +
   scale_fill_manual(breaks = c("Controls", "ACM", "DCM", "HCM"),

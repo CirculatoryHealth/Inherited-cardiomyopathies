@@ -140,227 +140,9 @@ df$CM <- as.factor(df$CM)
 rm(acm, ddcm, hcm, dcm, ad, ac, d, da, hd, hc, dh, dia, non, new)
 
 
-# Enrichment CVDs ---------------------------------------------------------
+# Testing differences -----------------------------------------------------
 
-message("Test for enrichment in certain phenotypes")
-cvd <- df %>% select(ends_with("sum")) %>% names()
-test <- list()
-pval <- data.frame(Phenotype = rep("Outcomes", 9), OR = rep(NA, 9), 
-                   LCI = rep(NA, 9), UCI = rep(NA, 9), p = rep(NA, 9),
-                   CM = c("ACM", "ACM_Diagnosed", "ACM_NonDiag", 
-                          "DCM", "DCM_Diagnosed", "DCM_NonDiag", 
-                          "HCM", "HCM_Diagnosed", "HCM_NonDiag"))
-p.vec <- data.frame(p = NA, test = NA)
-for (cm in levels(df$CM)) {
-  if (cm %in% c("ACM", "DCM", "HCM", "AD", "HD")) {
-    
-    f <- df %>% select(any_of(cvd), CM) %>% filter(CM %in% c(cm,  "Controls"))
-    f$CM <- droplevels(f$CM)
-    
-    fd <- df %>%
-      select(any_of(cvd), Pheno, CM) %>%
-      filter(CM %in% c(cm,  "Controls")) %>%
-      filter(Pheno == "Diagnosed")
-    fd$CM <- droplevels(fd$CM)
-    
-    fh <- df %>%
-      select(any_of(cvd), Pheno, CM) %>%
-      filter(CM %in% c(cm,  "Controls")) %>%
-      filter(Pheno == "Non-Diagnosed")
-    fh$CM <- droplevels(fh$CM)
-    
-    for (x in cvd) {
-      ps <- vector()
-      
-      tryCatch( {
-        
-        tmp <- f %>% dplyr::select(any_of(x), CM)
-        test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
-        or <- test[[x]]$estimate
-        ci <- test[[x]]$conf.int
-        if (or < 1) {
-          or <- 1 / or
-          ci <- 1 / test[[x]]$conf.int
-          ci <- ci[c(2,1)]
-        } 
-        ps <- c(gsub("_sum", "", x), or, ci, test[[x]]$p.value, cm)
-        p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, "Controls", sep = "_")))
-        pval <- rbind(pval, ps)
-        
-        tmp <- fd %>% dplyr::select(any_of(x), CM)
-        test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
-        or <- test[[x]]$estimate
-        ci <- test[[x]]$conf.int
-        if (or < 1) {
-          or <- 1 / or
-          ci <- 1 / test[[x]]$conf.int
-          ci <- ci[c(2,1)]
-        } 
-        ps <- c(gsub("_sum", "", x), or, ci, test[[x]]$p.value, paste0(cm, "_Diagnosed"))
-        pval <- rbind(pval, ps)
-        p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, "Controls_Diagnosed", sep = "_")))
-        
-        tmp <- fh %>% dplyr::select(any_of(x), CM)
-        test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
-        or <- test[[x]]$estimate
-        ci <- test[[x]]$conf.int
-        if (or < 1) {
-          or <- 1 / or
-          ci <- 1 / test[[x]]$conf.int
-          ci <- ci[c(2,1)]
-        } 
-        ps <- c(gsub("_sum", "", x), or, ci, test[[x]]$p.value, paste0(cm, "_NonDiag"))
-        pval <- rbind(pval, ps)
-        p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, "Controls_NonDiag", sep = "_")))
-        
-      }, error = function(e) {
-        
-        ps <- c(gsub("_sum", "", x), NA, NA, NA, cm)
-        pval <- rbind(pval, ps)
-        ps <- c(gsub("_sum", "", x), NA, NA, NA, paste0(cm, "_Diagnosed"))
-        pval <- rbind(pval, ps)
-        ps <- c(gsub("_sum", "", x), NA, NA, NA, paste0(cm, "_NonDiag"))
-        pval <- rbind(pval, ps)
-        
-      })
-      
-      write.table(table(tmp), "results/output/CVD_enrichment_XTab.tsv",
-                  sep = "\t", quote = FALSE, append = TRUE,
-                  col.names = c(x, paste("Controls", cm, sep = "_")))
-    }
-    
-  } else if (cm %in% c("Diagnosed_all", "Diagnosed_CM")) {
-    
-    f <- df %>% select(any_of(cvd), CM) %>% 
-      filter(CM %in% c(cm,  paste0("Non-", cm)))
-    f$CM <- droplevels(f$CM)
-    
-    for (x in cvd) {
-      ps <- vector()
-      
-      tryCatch( {
-        
-        tmp <- f %>% dplyr::select(any_of(x), CM)
-        test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
-        or <- test[[x]]$estimate
-        ci <- test[[x]]$conf.int
-        if (or < 1) {
-          or <- 1 / or
-          ci <- 1 / test[[x]]$conf.int
-          ci <- ci[c(2,1)]
-        } 
-        ps <- c(gsub("_sum", "", x), or, ci, test[[x]]$p.value, cm)
-        p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, sep = "_")))
-        pval <- rbind(pval, ps)
-        
-      }, error = function(e) {
-        
-        ps <- c(gsub("_sum", "", x), NA, NA, NA, cm)
-        pval <- rbind(pval, ps)
-        
-      })
-    }
-    
-  }
-}
-
-for (cm in c("ACM_AD", "DCM_AD", "DCM_HD", "HCM_HD")) {
-  f <- df %>% select(any_of(cvd), CM) %>% 
-    filter(CM %in% c(cm,  unlist(strsplit(cm, "_"))[2]))
-  f$CM <- droplevels(f$CM)
-  
-  fd <- df %>%
-    select(any_of(cvd), Pheno, CM) %>%
-    filter(CM %in% c(cm,  unlist(strsplit(cm, "_"))[2])) %>%
-    filter(Pheno == "Diagnosed")
-  fd$CM <- droplevels(fd$CM)
-  
-  fh <- df %>%
-    select(any_of(cvd), Pheno, CM) %>%
-    filter(CM %in% c(cm,  unlist(strsplit(cm, "_"))[2])) %>%
-    filter(Pheno == "Non-Diagnosed")
-  fh$CM <- droplevels(fh$CM)
-  
-  for (x in cvd) {
-    ps <- vector()
-    
-    tryCatch( {
-      
-      tmp <- f %>% dplyr::select(any_of(x), CM)
-      test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
-      or <- test[[x]]$estimate
-      ci <- test[[x]]$conf.int
-      if (or < 1) {
-        or <- 1 / or
-        ci <- 1 / test[[x]]$conf.int
-        ci <- ci[c(2,1)]
-      } 
-      ps <- c(gsub("_sum", "", x), or, ci, test[[x]]$p.value, cm)
-      p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, sep = "_")))
-      pval <- rbind(pval, ps)
-      
-      tmp <- fd %>% dplyr::select(any_of(x), CM)
-      test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
-      or <- test[[x]]$estimate
-      ci <- test[[x]]$conf.int
-      if (or < 1) {
-        or <- 1 / or
-        ci <- 1 / test[[x]]$conf.int
-        ci <- ci[c(2,1)]
-      } 
-      ps <- c(gsub("_sum", "", x), or, ci, test[[x]]$p.value, paste0(cm, "_Diagnosed"))
-      pval <- rbind(pval, ps)
-      p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, "Diagnosed", sep = "_")))
-      
-      tmp <- fh %>% dplyr::select(any_of(x), CM)
-      test[[x]] <- fisher.test(table(tmp), workspace = 1e9)
-      or <- test[[x]]$estimate
-      ci <- test[[x]]$conf.int
-      if (or < 1) {
-        or <- 1 / or
-        ci <- 1 / test[[x]]$conf.int
-        ci <- ci[c(2,1)]
-      } 
-      ps <- c(gsub("_sum", "", x), or, ci, test[[x]]$p.value, paste0(cm, "_NonDiag"))
-      pval <- rbind(pval, ps)
-      p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, , "NonDiag", sep = "_")))
-      
-    }, error = function(e) {
-      
-      ps <- c(gsub("_sum", "", x), NA, NA, NA, cm)
-      pval <- rbind(pval, ps)
-      ps <- c(gsub("_sum", "", x), NA, NA, NA, paste0(cm, "_Diagnosed"))
-      pval <- rbind(pval, ps)
-      ps <- c(gsub("_sum", "", x), NA, NA, NA, paste0(cm, "_NonDiag"))
-      pval <- rbind(pval, ps)
-      
-    })
-  }
-  
-}
-write.table(pval, "results/output/CVD_enrichment_fisher.tsv", sep = "\t",
-            quote = FALSE, row.names = FALSE)
-p.bin <- pval
-rm(test, pval, f, ps, cm, tmp, x, fh, fd, cvd, or, ci)
-
-
-# Other statistics --------------------------------------------------------
-
-# n <- grep("LVEDM.LVEDV", names(df))
-# names(df)[n] <- "LVMVR"
-n <- grep("LVEDV.RVEDV", names(df))
-names(df)[n] <- "LVEDV/RVEDV"
-
-n <- grep("wall_thickness", names(df), ignore.case = TRUE)
-df <- as.data.frame(df)
-for (col in n) {
-  t1 <- quantile(df[, col], 0.25, na.rm = TRUE) - (IQR(df[, col], na.rm = TRUE) * 3)
-  t2 <- quantile(df[, col], 0.75, na.rm = TRUE) + (IQR(df[, col], na.rm = TRUE) * 3)
-  
-  df[, col][df[, col] > t2 | df[, col] < t1 ] <- NA
-}
-rm(n, t1, t2, col)
-
+# Select all variables for which to perform tests
 cmr <- df %>% select(starts_with("RV"), starts_with("LV"), contains("Wall_thickness"), 
                      contains("Ecc", ignore.case = FALSE), 
                      contains("Ell", ignore.case = FALSE)) %>% 
@@ -371,260 +153,243 @@ ecg <- c("ECG_heart_rate.0_mean", "P_duration", "P_axis.2.0",
 met <- df %>% select(contains("MET", ignore.case = FALSE)) %>% names()
 bp <- df %>% select(Total_Cholesterol, HDL, LDL,
                     contains("blood_pressure_mean")) %>% names()
-cols <- c("Age_when_attended_assessment_centre.0.0", "BMI", met, bp, ecg, cmr)
+cvd <- df %>% select(ends_with("sum")) %>% names()
+dia <- c("Heart_Failure_sum", "Cardiomyopathy_sum", "HCM_sum", "DCM_sum",
+         "Chronic_ischaemic_heart_disease_sum")
+cols <- c("BMI", met, bp, ecg, cmr, cvd)
 
-nn.col <- c("Age_when_attended_assessment_centre.0.0", "BMI", ecg, met,  
-            "peakEll4Ch", "TPKEcc", "peakEcc", "peakEll2Ch", "RVESV", "RVSV", 
-            "Septal_wall_thickness", "Global_wall_thickness", "LVEDM", "LVEDMi", 
-            "LVEDV", "LVEDV/RVEDV", "LVEDVi", "LVESV", "LVESVi", "LVMVR", 
-            "LVPPAFR", "LVSV", "LVSVi", "LV_RV_ESV", "LVEF")
-test <- list()
-pval <- data.frame(Phenotype = "Outcomes", EffSize = NA, pvalue = NA, test = NA, CM = NA)
-for (cm in levels(df$CM)) {
-  if (cm %in% c("ACM", "DCM", "HCM", "AD", "HD")) {
-    
-    f <- df %>% select(CM, Pheno, any_of(cols)) %>%
-      filter(CM %in% c(cm,  "Controls")) %>% as.data.frame()
+# Make list of continuous variables
+cont <- cols[!cols %in% cvd]
+
+# Prepare results dataframe
+pval <- data.frame(Phenotype = rep("Outcomes", 6), Estimate = rep(NA, 6), 
+                   LCI = rep(NA, 6), UCI = rep(NA, 6), p = rep(NA, 6),
+                   test = rep(NA, 6), CM = c("ACM", "ACM_NonDiag", "DCM", 
+                                             "DCM_NonDiag", "HCM", "HCM_NonDiag"))
+prim <- c("ACM", "DCM", "HCM")
+sec <- c("ACM_AD", "DCM_AD", "DCM_HD", "HCM_HD", "Diagnosed_CM")
+
+message("Test for differences")
+for (cm in c(prim, sec)) {
+  if (cm %in% prim) {
+    # Make df of only this CM and controls
+    f <- df %>% select(any_of(cols), CM, Pheno) %>% 
+      filter(CM %in% c(cm,  "Controls"))
     f$CM <- droplevels(f$CM)
     
-    fd <- f %>% filter(Pheno == "Diagnosed")
-    fd$CM <- droplevels(fd$CM)
-    
+    # Make df of only non-diagnosed subjects
     fh <- f %>% filter(Pheno == "Non-Diagnosed")
     fh$CM <- droplevels(fh$CM)
     
-    for (x in names(f)) {
-      if (!x %in% c("CM", "Pheno", nn.col)) {
-        tried <- try(t.test(get(x) ~ CM, data = f), silent = TRUE)
+  } else if (cm %in% c("ACM_AD", "DCM_AD", "DCM_HD", "HCM_HD")) {
+    # Make df of overlapping and non-overlapping subjects
+    f <- df %>% select(any_of(cols), CM) %>% 
+      filter(CM %in% c(cm,  unlist(strsplit(cm, "_"))[2]))
+    f$CM <- droplevels(f$CM)
+  } else {
+    # Make df of diagnosed and non-diagnosed subjects
+    f <- df %>% select(any_of(cols), CM) %>% 
+      filter(CM %in% c(cm,  paste0("Non-", cm)))
+    f$CM <- droplevels(f$CM)
+  }# End preparing dfs based on CM
+  
+  for (x in cols) {
+    if (x %in% cvd && cm %in% prim) {
+      tryCatch( {
+        # Perform Fisher's exact test on outcome x
+        tmp <- f %>% dplyr::select(any_of(x), CM)
+        test <- fisher.test(table(tmp), workspace = 1e9)
+        # Save OR and confidence interval
+        or <- test$estimate
+        ci <- test$conf.int
+        # Make OR for ACM in same direction as for DCM and HCM
+        if (cm == "ACM") {
+          or <- 1 / or
+          ci <- 1 / ci
+          ci <- ci[c(2,1)]
+        } 
+        # Save results in dataframe
+        ps <- c(gsub("_sum", "", x), or, ci, test$p.value, "Fisher", cm)
+        pval <- rbind(pval, ps)
         
-        if (inherits(tried, "try-error")) {
-          vals <- c(x, NA, NA, "T", cm)
-        } else {
-          test[[x]] <- t.test(get(x) ~ CM, data = f)
-          eff <- cohens_d(f, as.formula(paste0(x, " ~ CM")))
-          vals <- c(x, eff$effsize, test[[x]]$p.value, "T", cm)
-          p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, "Controls", sep = "_")))
-        }
-        pval <- rbind(pval, vals)
+      }, error = function(e) {
         
-        tried <- try(t.test(get(x) ~ CM, data = fd), silent = TRUE)
+        # If the test fails, replace OR, CI and p-value with NA
+        ps <- c(gsub("_sum", "", x), NA, NA, NA, "Fisher", cm)
+        pval <- rbind(pval, ps)
         
-        if (inherits(tried, "try-error")) {
-          vals <- c(x, NA, NA, "T", paste0(cm, "_Diagnosed"))
-        } else {
-          test[[x]] <- t.test(get(x) ~ CM, data = fd)
-          eff <- cohens_d(fd, as.formula(paste0(x, " ~ CM")))
-          vals <- c(x, eff$effsize, test[[x]]$p.value, "T", paste0(cm, "_Diagnosed"))
-          p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, "Controls_Diagnosed", sep = "_")))
-        }
-        pval <- rbind(pval, vals)
+      }) # End try to perform test
+      
+      if (!x %in% dia) {
+        tryCatch( {
+          # Perform Fisher's exact test on outcome x for undiagnosed subjects
+          tmp <- fh %>% dplyr::select(any_of(x), CM)
+          test <- fisher.test(table(tmp), workspace = 1e9)
+          # Save OR and confidence interval
+          or <- test$estimate
+          ci <- test$conf.int
+          # Make OR for ACM in same direction as for DCM and HCM
+          if (cm == "ACM") {
+            or <- 1 / or
+            ci <- 1 / ci
+            ci <- ci[c(2,1)]
+          } 
+          # Save results in dataframe
+          ps <- c(gsub("_sum", "", x), or, ci, test$p.value, "Fisher", paste0(cm, "_NonDiag"))
+          pval <- rbind(pval, ps)
+          
+        }, error = function(e) {
+          
+          # If the test fails, replace OR, CI and p-value with NA
+          ps <- c(gsub("_sum", "", x), NA, NA, NA, "Fisher", paste0(cm, "_NonDiag"))
+          pval <- rbind(pval, ps)
+          
+        }) # End try to perform test
         
-        tried <- try(t.test(get(x) ~ CM, data = fh), silent = TRUE)
-        
-        if (inherits(tried, "try-error")) {
-          vals <- c(x, NA, NA, "T", paste0(cm, "_NonDiag"))
-        } else {
-          test[[x]] <- t.test(get(x) ~ CM, data = fh)
-          eff <- cohens_d(fh, as.formula(paste0(x, " ~ CM")))
-          vals <- c(x, eff$effsize, test[[x]]$p.value, "T", paste0(cm, "_NonDiag"))
-          p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, "Controls_NonDiag", sep = "_")))
-        }
-        pval <- rbind(pval, vals)
-      } else if (!x %in% c("CM", "Pheno")) {
+      } # Only variables not used in diagnosis test on diagnosed groups
+      
+    } else if (x %in% cvd && cm %in% sec) {
+      if (x %in% dia && cm %in% c("ACM_AD", "DCM_AD", "DCM_HD", "HCM_HD")) {
+        tryCatch( {
+          # Perform Fisher's exact test on outcome x
+          tmp <- f %>% dplyr::select(any_of(x), CM)
+          test <- fisher.test(table(tmp), workspace = 1e9)
+          # Save OR and confidence interval
+          or <- 1/ test$estimate
+          ci <- 1/ test$conf.int
+          ci <- ci[c(2,1)]
+          # Save results in dataframe
+          ps <- c(gsub("_sum", "", x), or, ci, test$p.value, "Fisher", cm)
+          pval <- rbind(pval, ps)
+          
+        }, error = function(e) {
+          
+          # If the test fails, replace OR, CI and p-value with NA
+          ps <- c(gsub("_sum", "", x), NA, NA, NA, "Fisher", cm)
+          pval <- rbind(pval, ps)
+          
+        }) # End try to perform test
+      } else if(!x %in% dia && cm %in% sec) {
+        tryCatch( {
+          # Perform Fisher's exact test on outcome x
+          tmp <- f %>% dplyr::select(any_of(x), CM)
+          test <- fisher.test(table(tmp), workspace = 1e9)
+          # Save OR and confidence interval
+          or <- 1/ test$estimate
+          ci <- 1/ test$conf.int
+          ci <- ci[c(2,1)]
+          # Save results in dataframe
+          ps <- c(gsub("_sum", "", x), or, ci, test$p.value, "Fisher", cm)
+          pval <- rbind(pval, ps)
+          
+        }, error = function(e) {
+          
+          # If the test fails, replace OR, CI and p-value with NA
+          ps <- c(gsub("_sum", "", x), NA, NA, NA, "Fisher", cm)
+          pval <- rbind(pval, ps)
+          
+        }) # End try to perform test
+      } # diagnosis testing only for overlapping
+      
+    } else if (x %in% cont) {
+      
+      if (!x %in% c(cmr, ecg) || cm %in% sec) {
+        # See if test fails or not
         tried <- try(wilcox.test(get(x) ~ CM, data = f), silent = TRUE)
         
         if (inherits(tried, "try-error")) {
-          vals <- c(x, NA, NA, "MWU", cm)
+          # If test fails, replace Estimate, CI and p-value with NA
+          vals <- c(x, NA, NA, NA, NA, "MWU", cm)
         } else {
-          test[[x]] <- wilcox.test(get(x) ~ CM, data = f)
+          # Otherwise, perform test
+          test <- wilcox.test(get(x) ~ CM, data = f, conf.int = TRUE)
+          # Calculate effect size 
           eff <- wilcox_effsize(f, as.formula(paste0(x, " ~ CM")))
-          vals <- c(x, eff$effsize, test[[x]]$p.value, "MWU", cm)
-          p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, "Controls", sep = "_")))
+          # Save results (WHAT CI???)
+          vals <- c(x, eff$effsize, test$conf.int, test$p.value, "MWU", cm)
         }
         pval <- rbind(pval, vals)
-        
-        tried <- try(wilcox.test(get(x) ~ CM, data = fd), silent = TRUE)
-        
-        if(inherits(tried, "try-error")) {
-          vals <- c(x, NA, NA, "MWU", paste0(cm, "_Diagnosed"))
-        } else {
-          test[[x]] <- wilcox.test(get(x) ~ CM, data = fd)
-          eff <- wilcox_effsize(fd, as.formula(paste0(x, " ~ CM")))
-          vals <- c(x, eff$effsize, test[[x]]$p.value, "MWU", paste0(cm, "_Diagnosed"))
-          p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, "Controls_Diagnosed", sep = "_")))
-        }
-        pval <- rbind(pval, vals)
-        
+      } # Don't test ECG and CMR differences for full groups
+      
+      if (cm %in% prim) {
+        # See if test fails or not
         tried <- try(wilcox.test(get(x) ~ CM, data = fh), silent = TRUE)
         
-        if(inherits(tried, "try-error")) {
-          vals <- c(x, NA, NA, "MWU", paste0(cm, "_NonDiag"))
+        if (inherits(tried, "try-error")) {
+          # If test fails, replace Estimate, CI and p-value with NA
+          vals <- c(x, NA, NA, NA, NA, "MWU", paste0(cm, "_NonDiag"))
         } else {
-          test[[x]] <- wilcox.test(get(x) ~ CM, data = fh)
+          # Otherwise, perform test
+          test <- wilcox.test(get(x) ~ CM, data = fh, conf.int = TRUE)
+          # Calculate effect size 
           eff <- wilcox_effsize(fh, as.formula(paste0(x, " ~ CM")))
-          vals <- c(x, eff$effsize, test[[x]]$p.value, "MWU", paste0(cm, "_NonDiag"))
-          p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, "Controls_NonDiag", sep = "_")))
+          # Save results (WHAT CI???)
+          vals <- c(x, eff$effsize, test$conf.int, test$p.value, "MWU", paste0(cm, "_NonDiag"))
         }
         pval <- rbind(pval, vals)
-      } # End check for continuous normal variable
-    } # End iteration variables
+      } # Only test for CMs
+      
+    } # End choose type of test (Fisher or MWU)
     
-  } else if (cm %in% c("Diagnosed_all", "Diagnosed_CM")) {
-    
-    f <- df %>% select(CM, Pheno, any_of(cols)) %>%
-      filter(CM %in% c(cm,  paste0("Non-", cm))) %>% as.data.frame()
-    f$CM <- droplevels(f$CM)
-    
-    for (x in names(f)) {
-      if (!x %in% c("CM", "Pheno", nn.col)) {
-        
-        tried <- try(t.test(get(x) ~ CM, data = f), silent = TRUE)
-        
-        if (inherits(tried, "try-error")) {
-          vals <- c(x, NA, NA, "T", cm)
-        } else {
-          test[[x]] <- t.test(get(x) ~ CM, data = f)
-          eff <- cohens_d(f, as.formula(paste0(x, " ~ CM")))
-          vals <- c(x, eff$effsize, test[[x]]$p.value, "T", cm)
-          p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, "Controls", sep = "_")))
-        } # End check error test
-        pval <- rbind(pval, vals)
-      } else if (!x %in% c("CM", "Pheno")) {
-        tried <- try(wilcox.test(get(x) ~ CM, data = f), silent = TRUE)
-        
-        if (inherits(tried, "try-error")) {
-          vals <- c(x, NA, NA, "MWU", cm)
-        } else {
-          test[[x]] <- wilcox.test(get(x) ~ CM, data = f)
-          eff <- wilcox_effsize(f, as.formula(paste0(x, " ~ CM")))
-          vals <- c(x, eff$effsize, test[[x]]$p.value, "MWU", cm)
-          p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, "Controls", sep = "_")))
-        } # End check error test
-        pval <- rbind(pval, vals)
-      } # End check for continuous normal variable
-    } # End iteration variables
-  } # End check CM-group
+  } # End iteration outcomes
+  
 } # End iteration CMs
 
-for (cm in c("ACM_AD", "DCM_AD", "DCM_HD", "HCM_HD")) {
-  f <- df %>% select(CM, Pheno, any_of(cols)) %>%
-    filter(CM %in% c(cm,  unlist(strsplit(cm, "_"))[2])) %>% as.data.frame()
-  f$CM <- droplevels(f$CM)
-  
-  fd <- df %>% select(CM, Pheno, any_of(cols)) %>%
-    filter(CM %in% c(cm,  unlist(strsplit(cm, "_"))[2])) %>%
-    filter(Pheno == "Diagnosed") %>% as.data.frame()
-  fd$CM <- droplevels(fd$CM)
-  
-  fh <- df %>% select(CM, Pheno, any_of(cols)) %>%
-    filter(CM %in% c(cm,  unlist(strsplit(cm, "_"))[2])) %>%
-    filter(Pheno == "Non-Diagnosed") %>% as.data.frame()
-  fh$CM <- droplevels(fh$CM)
-  
-  for (x in names(f)) {
-    if (!x %in% c("CM", "Pheno", nn.col)) {
-      tried <- try(t.test(get(x) ~ CM, data = f), silent = TRUE)
-      
-      if (inherits(tried, "try-error")) {
-        vals <- c(x, NA, NA, "T", cm)
-      } else {
-        test[[x]] <- t.test(get(x) ~ CM, data = f)
-        eff <- cohens_d(f, as.formula(paste0(x, " ~ CM")))
-        vals <- c(x, eff$effsize, test[[x]]$p.value, "T", cm)
-        p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, "Controls", sep = "_")))
-      }
-      pval <- rbind(pval, vals)
-      
-      tried <- try(t.test(get(x) ~ CM, data = fd), silent = TRUE)
-      
-      if (inherits(tried, "try-error")) {
-        vals <- c(x, NA, NA, "T", paste0(cm, "_Diagnosed"))
-      } else {
-        test[[x]] <- t.test(get(x) ~ CM, data = fd)
-        eff <- cohens_d(fd, as.formula(paste0(x, " ~ CM")))
-        vals <- c(x, eff$effsize, test[[x]]$p.value, "T", paste0(cm, "_Diagnosed"))
-        p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, "Controls_Diagnosed", sep = "_")))
-      }
-      pval <- rbind(pval, vals)
-      
-      tried <- try(t.test(get(x) ~ CM, data = fh), silent = TRUE)
-      
-      if (inherits(tried, "try-error")) {
-        vals <- c(x, NA, NA, "T", paste0(cm, "_NonDiag"))
-      } else {
-        test[[x]] <- t.test(get(x) ~ CM, data = fh)
-        eff <- cohens_d(fh, as.formula(paste0(x, " ~ CM")))
-        vals <- c(x, eff$effsize, test[[x]]$p.value, "T", paste0(cm, "_NonDiag"))
-        p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, "Controls_NonDiag", sep = "_")))
-      }
-      pval <- rbind(pval, vals)
-    } else if (!x %in% c("CM", "Pheno")) {
-      tried <- try(wilcox.test(get(x) ~ CM, data = f), silent = TRUE)
-      
-      if (inherits(tried, "try-error")) {
-        vals <- c(x, NA, NA, "MWU", cm)
-      } else {
-        test[[x]] <- wilcox.test(get(x) ~ CM, data = f)
-        eff <- wilcox_effsize(f, as.formula(paste0(x, " ~ CM")))
-        vals <- c(x, eff$effsize, test[[x]]$p.value, "MWU", cm)
-        p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, "Controls", sep = "_")))
-      }
-      pval <- rbind(pval, vals)
-      
-      tried <- try(wilcox.test(get(x) ~ CM, data = fd), silent = TRUE)
-      
-      if(inherits(tried, "try-error")) {
-        vals <- c(x, NA, NA, "MWU", paste0(cm, "_Diagnosed"))
-      } else {
-        test[[x]] <- wilcox.test(get(x) ~ CM, data = fd)
-        eff <- wilcox_effsize(fd, as.formula(paste0(x, " ~ CM")))
-        vals <- c(x, eff$effsize, test[[x]]$p.value, "MWU", paste0(cm, "_Diagnosed"))
-        p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, "Controls_Diagnosed", sep = "_")))
-      }
-      pval <- rbind(pval, vals)
-      
-      tried <- try(wilcox.test(get(x) ~ CM, data = fh), silent = TRUE)
-      
-      if(inherits(tried, "try-error")) {
-        vals <- c(x, NA, NA, "MWU", paste0(cm, "_NonDiag"))
-      } else {
-        test[[x]] <- wilcox.test(get(x) ~ CM, data = fh)
-        eff <- wilcox_effsize(fh, as.formula(paste0(x, " ~ CM")))
-        vals <- c(x, eff$effsize, test[[x]]$p.value, "MWU", paste0(cm, "_NonDiag"))
-        p.vec <- rbind(p.vec, c(test[[x]]$p.value, paste(cm, "Controls_NonDiag", sep = "_")))
-      }
-      pval <- rbind(pval, vals)
-    } # End check for continuous normal variable
-  } # End iteration variables
-}
-write.table(pval, "results/output/Differences_Continuous.tsv",
-            sep = "\t", quote = FALSE, row.names = FALSE)
-p.con <- pval
-rm(cols, test, pval, f, cm, x, cmr, ecg, met, bp, vals, eff, nn.col, fd, fh, 
-   tried)
+pval[, c("Phenotype", "test", "CM")] <- lapply(pval[, c("Phenotype", "test", "CM")], as.factor)
+pval[, c("Estimate", "LCI", "UCI", "p")] <- lapply(pval[, c("Estimate", "LCI", "UCI", "p")], as.numeric)
+
+write.table(pval, "results/output/Difference_testing.tsv", sep = "\t",
+            quote = FALSE, row.names = FALSE)
+rm(cols, test, f, cm, x, cmr, ecg, met, bp, vals, eff, tmp, fh, 
+   tried, cont, dia, ci, cvd, or, ps)
 
 
 # Visualizing p-values ----------------------------------------------------
 
-# All p-values histogram with KS-test for continuous uniform distribution
-p.vec$p <- as.numeric(p.vec$p)
-ks <- ks.test(p.vec$p, "punif", exact = TRUE)
-ggplot(p.vec, aes(x = p)) +
+# Create df to visualise p-value distributions
+pval$Group <- "All (n=818)"
+prim <- pval %>% filter(CM %in% prim)
+prim$Group <- "Cardiomyopathies (n=102)"
+cm <- pval %>% filter(CM %in% c("ACM_NonDiag", "DCM_NonDiag", "HCM_NonDiag"))
+cm$Group <- "Undiagnosed cardiomyopathies (n=261)"
+ov <- pval %>% filter(CM %in% c("ACM_AD", "DCM_AD", "DCM_HD", "HCM_HD"))
+ov$Group <- "Overlap (n=368)"
+dia <- pval %>% filter(CM %in% "Diagnosed_CM")
+dia$Group <- "Diagnosed vs. undiagnosed (n=87)"
+all <- rbind(pval, prim, cm, ov, dia)
+all$Group <- as.factor(all$Group)
+
+# Prepare p-value dataframe for annotation of histograms
+ks <- data.frame(Group = levels(all$Group), 
+                 pvalue = rep(NA, length(levels(all$Group))), 
+                 p = rep(.9, length(levels(all$Group))),
+                 label = rep(NA, length(levels(all$Group))))
+ks$pvalue[ks$Group == "All (n=818)"] <- ks.test(pval$p, "punif", exact = TRUE)$p.value
+ks$pvalue[ks$Group == "Cardiomyopathies (n=102)"] <- ks.test(prim$p, "punif", exact = TRUE)$p.value
+ks$pvalue[ks$Group == "Undiagnosed cardiomyopathies (n=261)"] <- ks.test(cm$p, "punif", exact = TRUE)$p.value
+ks$pvalue[ks$Group == "Overlap (n=368)"] <- ks.test(ov$p, "punif", exact = TRUE)$p.value
+ks$pvalue[ks$Group == "Diagnosed vs. undiagnosed (n=87)"] <- ks.test(dia$p, "punif", exact = TRUE)$p.value
+ks$label[ks$pvalue > 0.05] <- "p > 0.05"
+ks$label[ks$pvalue >= .01 & ks$pvalue <= 0.05] <- paste0("p = ", round(ks$pvalue[ks$pvalue >= .01 & ks$pvalue <= 0.05], 2))
+ks$label[ks$pvalue < .01] <- paste0("p = ", formatC(ks$pvalue[ks$pvalue < .01], format = "e", digits = 1))
+# ks$label[ks$pvalue >= .01] <- round(ks$pvalue[ks$pvalue >= .01], 2)
+# ks$label[ks$pvalue < .01] <- pretty10exp(ks$pvalue[ks$pvalue < .01], digits = 2)
+
+# Visualization
+ggplot(all, aes(x = p)) +
   geom_histogram(aes(y = ..density..), color = "black", fill = "grey", size = .2) +
-  geom_hline(yintercept = 1, size = .2 ) +
-  annotate("text", x = 0.025, y = 2.4, size = 1, 
-           label = paste0("p = ", formatC(ks$p.value, format = "e", digits = 1)),) +
+  geom_hline(yintercept = 1, size = .2) +
+  facet_wrap(~Group) +
+  geom_text(data = ks, y = 4.9, label = ks$label, size = 1) +
   labs(x = "p-value", y = "Density") +
   my_theme() 
-ggsave("results/figures/Multiple_testing_distribution.svg", width = 5 * pix, height = 4 * pix)
+ggsave("results/figures/Multiple_testing_distribution.svg", width = 8 * pix, height =  5  * pix)
 
-# See 
-p.bin[c("Phenotype", "CM")] <- lapply(p.bin[c("Phenotype", "CM")], as.factor)
+ # See 
 cum <- NULL
-
-for (x in levels(p.bin$Phenotype)) {
+for (x in levels(pval$Phenotype)) {
   new <- data.frame(Phenotype = x, Comparison = "CM-Controls", Ratio = NA)
-  new$Ratio <- p.bin %>% filter(CM %in% c("ACM", "DCM", "HCM")) %>% 
+  new$Ratio <- pval %>% filter(CM %in% c("ACM", "DCM", "HCM")) %>% 
     filter(Phenotype == x) %>% filter(p < .05) %>% nrow / 3
   cum <- rbind(cum, new)
 }
@@ -637,48 +402,14 @@ cum %>% filter(Ratio > 0) %>%
   scale_fill_manual(values = c("#FFD167", "#cff27e", "#4cbd97", "#e8e1ef", 
                                "#30362f", "#168ab2", "#1c1f33", "#161925", 
                                "2176ae", "#ef476f", "#881600", "#666370", 
-                               "#4b2142", "#575d90", "#c16200"),
+                               "#4b2142", "#575d90", "#c16200", "red"),
                     labels = gsub("_", " ", levels(cum$Phenotype))) +
   scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 1/3), 
                      labels = c("0", "1/3", "2/3", "3/3")) +
-  my_theme() + 
+  pc_theme() + 
   theme(axis.text.x = element_text(angle = 45, hjust=1),
         legend.position = "none")
 ggsave("results/figures/Ratio_significance_CMs.svg", width = 6 * pix, height = 4 * pix)
-
-
-# Filtering CM/HF diagnosed -----------------------------------------------
-
-cms <- c("Heart_Failure_sum", "Cardiomyopathy_sum", "DCM_sum", "HCM_sum",
-         "Ventricular_arrhythmias_sum", "Cardiac_arrest_sum")
-ecg <- c("ECG_heart_rate.0_mean", "P_duration", "P_axis.2.0",
-         "PQ_interval.2.0", "QRS_duration", "R_axis.2.0",
-         "QTC_interval.2.0", "T_axis.2.0")
-
-d <- df %>% select(f.eid, all_of(cms))
-d[, "CVD_diagnosis"] <- as.integer(apply(d[, 2:ncol(d)], 1, function(r) any(r %in% c(grep("Yes", r, value = T)))))
-d <- d %>% select(f.eid, CVD_diagnosis)
-d$CVD_diagnosis <- ifelse(d$CVD_diagnosis >= 1, "Yes", "No")
-df <- merge(df, unique(d), by = "f.eid", all.x = TRUE)
-
-d <- df %>% select(f.eid, starts_with("LV"), starts_with("RV")) %>%
-  select(!c(LV, RV))
-d$MRI <- rowMeans(d[, 2:ncol(d)], na.rm = TRUE)
-d$MRI[!is.na(d$MRI)] <- "Yes"
-d$MRI[d$MRI != "Yes"] <- "No"
-d$MRI <- as.factor(d$MRI)
-d <- d %>% select(f.eid, MRI)
-df <- merge(df, unique(d), by = "f.eid", all.x = TRUE)
-
-d <- df %>% dplyr::select(f.eid, any_of(ecg))
-d$ECG <- rowMeans(d[, 2:ncol(d)], na.rm = TRUE)
-d$ECG[!is.na(d$ECG)] <- "Yes"
-d$ECG[d$ECG != "Yes"] <- "No"
-d$ECG <- as.factor(d$ECG)
-d <- d %>% select(f.eid, ECG)
-df <- merge(df, unique(d), by = "f.eid", all.x = TRUE)
-
-saveRDS(df, file = "data/processed/MCM_filter_ready_full.rds")
 
 
 # Loss-of-Function --------------------------------------------------------
