@@ -6,6 +6,8 @@ data/temp/*
 plotly*
 core*
 *.txt_*
+*tab
+*info
 
 # R files
 .Rproj.user

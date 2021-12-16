@@ -86,7 +86,7 @@ else
 
   ROOT="$1"
   cd ${ROOT}
-  INDEL=${3:-no}
+  INDEL=${2:-no}
   DATE=$(date +'%d-%m-%Y')
 
   ### TOOLS
@@ -155,12 +155,12 @@ else
 
   echo "Compiling list of SNPs and from ClinVar and VKGL per phenotype"
   echo "Extracting participants carrying (likely) pathogenic mutations"
-  DEP2a=$(sbatch --output="${LOGS}/ACM_prep_SNPs.log" ${SCRIPT}/prep_SNPs.sh ACM data/raw/ACM_Clinvar_result_LP.txt data/raw/ACM_VKGL.txt --time=30:00 | sed 's/Submitted batch job //')
-  DEP3a=$(sbatch --dependency=afterok:${DEP2a} --output="${LOGS}/ACM_extract_IID.log" ${SCRIPT}/extract_IID.sh ACM ${INDEL} ${LOG} --time=01:00:00 --mem 40G | sed 's/Submitted batch job //')
-  DEP2d=$(sbatch --dependency=afterok:${DEP3a} --output="${LOGS}/DCM_prep_SNPs.log" ${SCRIPT}/prep_SNPs.sh DCM data/raw/DCM_Clinvar_result_LP.txt data/raw/DCM_VKGL.txt --time=30:00 | sed 's/Submitted batch job //')
-  DEP3d=$(sbatch --dependency=afterok:${DEP2d} --output="${LOGS}/DCM_extract_IID.log" ${SCRIPT}/extract_IID.sh DCM ${INDEL} ${LOG} --time=01:00:00 --mem 40G | sed 's/Submitted batch job //')
-  DEP2h=$(sbatch --dependency=afterok:${DEP3d} --output="${LOGS}/HCM_prep_SNPs.log" ${SCRIPT}/prep_SNPs.sh HCM data/raw/HCM_Clinvar_result_LP.txt data/raw/HCM_VKGL.txt --time=30:00 | sed 's/Submitted batch job //')
-  DEP3h=$(sbatch --dependency=afterok:${DEP2h} --output="${LOGS}/HCM_extract_IID.log" ${SCRIPT}/extract_IID.sh HCM ${INDEL} ${LOG} --time=01:00:00 --mem 40G | sed 's/Submitted batch job //')
+  DEP2a=$(sbatch --output="${LOGS}/ACM_prep_SNPs.log" ${SCRIPT}/prep_SNPs.sh ACM data/raw/ACM_clinvar_result_LP.txt data/raw/ACM_VKGL.txt ${LOG} --time=30:00 | sed 's/Submitted batch job //')
+  DEP3a=$(sbatch --dependency=afterok:${DEP2a} --output="${LOGS}/ACM_extract_IID.log" ${SCRIPT}/extract_IID.sh ACM data/raw/ACM_indels.txt ${LOG} --time=01:00:00 --mem 40G | sed 's/Submitted batch job //')
+  DEP2d=$(sbatch --dependency=afterok:${DEP3a} --output="${LOGS}/DCM_prep_SNPs.log" ${SCRIPT}/prep_SNPs.sh DCM data/raw/DCM_clinvar_result_LP.txt data/raw/DCM_VKGL.txt ${LOG} --time=30:00 | sed 's/Submitted batch job //')
+  DEP3d=$(sbatch --dependency=afterok:${DEP2d} --output="${LOGS}/DCM_extract_IID.log" ${SCRIPT}/extract_IID.sh DCM data/raw/DCM_indels.txt ${LOG} --time=01:00:00 --mem 40G | sed 's/Submitted batch job //')
+  DEP2h=$(sbatch --dependency=afterok:${DEP3d} --output="${LOGS}/HCM_prep_SNPs.log" ${SCRIPT}/prep_SNPs.sh HCM data/raw/HCM_clinvar_result_LP.txt data/raw/HCM_VKGL.txt ${LOG} --time=30:00 | sed 's/Submitted batch job //')
+  DEP3h=$(sbatch --dependency=afterok:${DEP2h} --output="${LOGS}/HCM_extract_IID.log" ${SCRIPT}/extract_IID.sh HCM data/raw/HCM_indels.txt ${LOG} --time=01:00:00 --mem 40G | sed 's/Submitted batch job //')
   echo ""
   if [[ ${INDEL} == "no" ]]; then
     echobold "No file with overlapping indels provided, exiting now to make it manually or provide it"
