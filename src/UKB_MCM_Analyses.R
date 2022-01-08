@@ -100,8 +100,8 @@ rm(cm, f, tmp, new, dup, m, pie, prev)
 # For subanalysis without the two most frequent HCM SNPs, we remove these from 
 # the dataframe. 
 # Comment this section out for regular analysis
-hcm <- df %>% filter(CM == "HCM") %>% filter(SNP != "11:47332274:D:25") %>%
-  filter(SNP != "1:201359245:G:A")
+hcm <- df %>% filter(CM == "HCM") %>% 
+  filter(!SNP %in% c("1:201359245:G:A", "11:47332274:D:25"))
 new <- df %>% filter(CM %in% c("ACM", "DCM", "Controls"))
 sub <- rbind(new, hcm)
 # df <- sub

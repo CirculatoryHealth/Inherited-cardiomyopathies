@@ -11,18 +11,64 @@ pix <- 0.393700787
 
 # Forest plot -------------------------------------------------------------
 
-pheno <- c("Outcomes", "Heart_Failure", "Cardiomyopathy", 
+pheno <- c("Outcomes", "Heart_Failure", "Cardiomyopathy", "HFCM", "Pheno",
            "Ventricular_arrhythmias", "Atrial_arrhythmias", "Heart_Arrhythmia", 
            "Chronic_ischaemic_heart_disease", "Angina", 
            "Cardiovascular_Death", "All_cause_mortality")
-dat <- read.delim("results/output/CVD_enrichment_fisher.tsv") %>%
-  filter(CM %in% c("ACM", "DCM", "HCM")) %>% filter(Phenotype %in% pheno) %>% arrange(factor(Phenotype, levels = pheno)) 
+dat <- read.delim("~/surfdrive/Mendelian_CM_WES_UKB/Difference_testing_v4.tsv") %>%
+  filter(CM %in% c("ACM", "DCM", "HCM", "strict HCM")) %>% 
+  filter(Phenotype %in% pheno) %>% arrange(factor(Phenotype, levels = pheno)) 
 dat$CM <- paste0(dat$CM, " G+")
+dat$CM[dat$CM == "strict HCM G+"] <- "HCM* G+"
 
 dat[, 2:4] <- lapply(dat[, 2:4], as.numeric)
+dat <- dat[order(dat[, 1], dat[, 7]),] %>% arrange(factor(Phenotype, levels = pheno)) 
+
 text <- data.frame()
 for (i in pheno) {
 
+  if (i == "Outcomes") {
+    t <- c(i, "OR (95% CI)")
+  } else {
+    temp <- dat %>% filter(Phenotype == i)
+    t <- c(i, paste0(format(round(temp[1, 2], 2), nsmall = 2), " (", format(round(temp[1, 3], 2), nsmall = 2), ";", format(round(temp[1, 4], 2), nsmall = 2), ")\n",
+                     format(round(temp[2, 2], 2), nsmall = 2), " (", format(round(temp[2, 3], 2), nsmall = 2), ";", format(round(temp[2, 4], 2), nsmall = 2), ")\n",
+                     format(round(temp[3, 2], 2), nsmall = 2), " (", format(round(temp[3, 3], 2), nsmall = 2), ";", format(round(temp[3, 4], 2), nsmall = 2), ")\n",
+                     format(round(temp[4, 2], 2), nsmall = 2), " (", format(round(temp[4, 3], 2), nsmall = 2), ";", format(round(temp[4, 4], 2), nsmall = 2), ")"))
+  }
+  text <- rbind(text, t)
+  text[1:2] <- lapply(text[1:2], as.character)
+}
+text[, 1] <- gsub("_", " ", text[, 1])
+text[,1][text[, 1] == "Heart Failure"] <- "Heart failure"
+text[,1][text[, 1] == "HFCM"] <- "Heart failure + cardiomyopathy"
+text[,1][text[, 1] == "Pheno"] <- "Phenotype positive"
+text[,1][text[, 1] == "Angina"] <- "Angina pectoris"
+text[,1][text[, 1] == "Chronic ischaemic heart disease"] <- "Chronic ischemic heart disease"
+text[,1][text[, 1] == "Heart Arrhythmia"] <- "Heart arrhythmia"
+text[,1][text[, 1] == "Cardiovascular Death"] <- "Cardiovascular death"
+
+pdf("~/surfdrive/Mendelian_CM_WES_UKB/FigureS1.pdf", paper = "a4",
+    width = 10 * pix, height = 12 * pix)
+dat %>% group_by(CM) %>% 
+  forestplot(labeltext = text, mean = Estimate, lower = LCI, upper = UCI, zero = 1, 
+             fn.ci_norm = c(fpDrawNormalCI, fpDrawDiamondCI, fpDrawCircleCI, fpDrawCircleCI),
+             shapes_gp = fpShapesGp(box = c("#ffd167", "#168ab2", "#ef476f", "black") %>% 
+                                      lapply(function(x) gpar(fill = x, col = x)),
+                                    line = c("#ffd167", "#168ab2", "#ef476f", "black") %>% 
+                                      lapply(function(x) gpar(fill = x, col = x)),
+                                    default = gpar(vertices = TRUE)),
+             boxsize = .1, graph.pos = 2, align = "r", lwd.xaxis = .5,
+             lwd.zero = .5, lwd.ci = .5, xlog = TRUE,
+             txt_gp = fpTxtGp(label = gpar(cex = .3), xlab = gpar(cex = .35),
+                              ticks = gpar(cex= .3), legend = gpar(cex = .3)),
+             is.summary = c(TRUE, rep(FALSE, 24)), xlab = "Odds ratio (95% CI)")
+dev.off()
+
+dat <- dat %>% filter(CM != "HCM* G+")
+text <- data.frame()
+for (i in pheno) {
+  
   if (i == "Outcomes") {
     t <- c(i, "OR (95% CI)")
   } else {
@@ -36,12 +82,15 @@ for (i in pheno) {
 }
 text[, 1] <- gsub("_", " ", text[, 1])
 text[,1][text[, 1] == "Heart Failure"] <- "Heart failure"
+text[,1][text[, 1] == "HFCM"] <- "Heart failure + cardiomyopathy"
+text[,1][text[, 1] == "Pheno"] <- "Phenotype positive"
 text[,1][text[, 1] == "Angina"] <- "Angina pectoris"
 text[,1][text[, 1] == "Chronic ischaemic heart disease"] <- "Chronic ischemic heart disease"
 text[,1][text[, 1] == "Heart Arrhythmia"] <- "Heart arrhythmia"
 text[,1][text[, 1] == "Cardiovascular Death"] <- "Cardiovascular death"
 
-svglite("results/figures/Figure3-Forest_plot.svg", width = 10 * pix, height = 8 * pix)
+pdf("~/surfdrive/Mendelian_CM_WES_UKB/Figure3.pdf", paper = "a4",
+    width = 10 * pix, height = 9 * pix)
 dat %>% group_by(CM) %>% 
   forestplot(labeltext = text, mean = Estimate, lower = LCI, upper = UCI, zero = 1, 
              fn.ci_norm = c(fpDrawNormalCI, fpDrawDiamondCI, fpDrawCircleCI),
@@ -140,7 +189,8 @@ v3 <- draw.quad.venn(area1 = nrow(subset(hcm, Heart_Failure_sum == "Yes")),
 ggarrange(v1, v2, v3, labels = c("A) ACM G+", "B) DCM G+", "C) HCM G+"), ncol = 3,
           font.label = list(size = 4, color = "black", face = "bold", 
                             family = "Helvetica"))
-ggsave("results/figures/Figure4-Venn.svg", width = 14 * pix, height = 4 * pix)
+ggsave("results/figures/Figure4-Venn.pdf", paper = "a4",
+       width = 14 * pix, height = 4 * pix)
 rm(v1, v2, v3, acm, dcm, hcm)
 
 # Boxplots ----------------------------------------------------------------
@@ -182,9 +232,9 @@ rm(wt, cmr, ex, i)
   geom_boxplot(outlier.shape = 18, outlier.size = .4, alpha = 0.9, 
                lwd = .2, fatten = .8) +
   labs(x = "Cardiomyopathy", y = "LVEF (%)") +
-  annotate("segment", x = c(1, 1, 3), xend = c(3, 1, 3),
-           y = c(90, 88, 88), yend = c(90, 90, 90), lwd = .2) +
-  annotate("text", x = 2, y = 92, label = "p=0.009", size = 1) +
+  # annotate("segment", x = c(1, 1, 3), xend = c(3, 1, 3),
+  #          y = c(90, 88, 88), yend = c(90, 90, 90), lwd = .2) +
+  # annotate("text", x = 2, y = 92, label = "p=0.009", size = 1) +
   scale_fill_manual(breaks = c("Controls", "ACM", "DCM", "HCM"),
                     values = c("#4cbd97", "#ffd167", "#168ab2", "#ef476f")) +
   my_theme() +
@@ -199,9 +249,9 @@ p1.1 <- ggplot(new,
   geom_boxplot(outlier.shape = 18, outlier.size = .4, alpha = 0.9, 
                lwd = .2, fatten = .8) +
   labs(x = "Cardiomyopathy", y = "RVEF (%)") +
-  annotate("segment", x = c(1, 1, 4), xend = c(4, 1, 4),
-           y = c(92, 90, 90), yend = c(92, 92, 92), lwd = .2) +
-  annotate("text", x = 2.5, y = 94, label = "p=0.034", size = 1) +
+  # annotate("segment", x = c(1, 1, 4), xend = c(4, 1, 4),
+  #          y = c(92, 90, 90), yend = c(92, 92, 92), lwd = .2) +
+  # annotate("text", x = 2.5, y = 94, label = "p=0.034", size = 1) +
   scale_fill_manual(breaks = c("Controls", "ACM", "DCM", "HCM"),
                     values = c("#4cbd97", "#ffd167", "#168ab2", "#ef476f")) +
   my_theme() +
@@ -230,9 +280,9 @@ p2.1 <- ggplot(new,
   geom_boxplot(outlier.shape = 18, outlier.size = .4, alpha = 0.9, 
                lwd = .2, fatten = .8) +
   labs(x = "Cardiomyopathy", y = "RVEDVi (ml/m2)")  +
-  annotate("segment", x = c(1, 1, 3), xend = c(3, 1, 3),
-           y = c(166, 160, 160), yend = c(166, 166, 166), lwd = .2) +
-  annotate("text", x = 2, y = 170, label = "p=0.048", size = 1) +
+  # annotate("segment", x = c(1, 1, 3), xend = c(3, 1, 3),
+  #          y = c(166, 160, 160), yend = c(166, 166, 166), lwd = .2) +
+  # annotate("text", x = 2, y = 170, label = "p=0.048", size = 1) +
   scale_fill_manual(breaks = c("Controls", "ACM", "DCM", "HCM"),
                     values = c("#4cbd97", "#ffd167", "#168ab2", "#ef476f")) +
   my_theme() +
@@ -261,9 +311,9 @@ p4 <- ggplot(new,
   geom_boxplot(outlier.shape = 18, outlier.size = .4, alpha = 0.9, 
                lwd = .2, fatten = .8) +
   labs(x = "Cardiomyopathy", y = "Peak longitudinal strain (%)") +
-  annotate("segment", x = c(1, 1, 3), xend = c(3, 1, 3),
-           y = c(-5, -7, -7), yend = c(-5, -5, -5), lwd = .2) +
-  annotate("text", x = 2, y = -4, label = "p=0.009", size = 1) +
+  # annotate("segment", x = c(1, 1, 3), xend = c(3, 1, 3),
+  #          y = c(-5, -7, -7), yend = c(-5, -5, -5), lwd = .2) +
+  # annotate("text", x = 2, y = -4, label = "p=0.009", size = 1) +
   scale_fill_manual(breaks = c("Controls", "ACM", "DCM", "HCM"),
                     values = c("#4cbd97", "#ffd167", "#168ab2", "#ef476f")) +
   my_theme() +
@@ -274,5 +324,6 @@ ggarrange(p1, p1.1, p2, p2.1, p3, p4, labels = "AUTO",
           font.label = list(size = 3.5, color = "black", face = "bold", 
                             family = "Helvetica"),
           ncol = 2, nrow = 3)
-ggsave("results/figures/Figure6-CMR_box.svg", width = 8 * pix, height = 12 * pix)
+ggsave("results/figures/Figure6-CMR_box.pdf", paper = "a4",
+       width = 8 * pix, height = 12 * pix)
 rm(p1, p1.1, p2, p2.1, p3, p4, new)
