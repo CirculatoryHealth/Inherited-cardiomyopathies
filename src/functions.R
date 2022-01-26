@@ -21,8 +21,9 @@ options(scipen = 6, digits = 4) # view outputs in non-scientific notation
 
 library(dplyr)
 library(ggplot2)
-library("officer")
-library("rvg")
+library(officer)
+library(rvg)
+library(docstring)
 
 
 # Start functions ---------------------------------------------------------
@@ -110,3 +111,114 @@ create_pptx <- function(plt = last_plot(), path = file.choose()) {
     print(target = path)
 }
 
+
+
+# Create incidence matrix graph -------------------------------------------
+
+inc_mat <- function(data, sig = 0.05, sig1 = NULL, 
+                    xas = names(data)[ncol(data)], legend = "none", cat = NULL) {
+  
+  #' Create incidence matrix graphs
+  #' 
+  #' @description This function creates an incidence matrix graph, showing 
+  #' whether tests were significant by displaying different colors
+  #' 
+  #' @param data Dataframe with header of all exposures tested and p-values in 
+  #' the dataframe. One of the columns should be the outcomes, column name 
+  #' should be specified by `xas`
+  #' @param sig Numerical, significance level for which p-values below this 
+  #' level will be colored as significant. Default is 0.05
+  #' @param sig1 Either NULL or numerical Second significance level, should be 
+  #' lower than `sig`. Will be colored differently. Default is NULL 
+  #' @param xas Character, name of the column in which outcomes for all tests
+  #' are given. Default is last column name of `data`
+  #' @param legend Character, the position of legends ("none", "left", "right", 
+  #' "bottom", "top", or two-element numeric vector). Default is "none"
+  #' @param cat Either NULL or a character vector, in latter case with length
+  #' equal to number of exposures, indicating categories corresponding to the
+  #' categories of the exposures. These will be displayed on the right side of 
+  #' the graph and seperated by horizontal lines. Default is NULL
+  #' 
+  #' @return A ggplot object with the incidence matrix graph
+  
+  ### Prepare data ###
+  data <- as_tibble(data)
+  
+  # Get number of outcomes and exposures
+  row <- nrow(unique(data[, xas]))
+  new <- data %>% select(-any_of(xas))
+  col <- ncol(new)
+  
+  # Create grid for graph
+  xy <- data.frame(x = rep(c(1:row), col),
+                   y = sort(rep(c(1:col), row)),
+                   p = unlist(c(new[, 1:ncol(new)])))
+  
+  # Create p-value categories
+  xy$pcat[xy$p >= sig] <- paste0("p > ", sig)
+  xy$pcat[xy$p < sig] <- paste0("p < ", sig)
+  if (!is.null(sig1)) {
+    if (sig1 >= sig) stop("sig1 should be smaller than sig!")
+    if (sig1 < 0.001) sigf <- format(sig1, scientific = TRUE)
+    xy$pcat[xy$p < sig1] <- paste0("p < ", sigf)
+    lev <- c(paste0("p > ", sig), paste0("p < ", sig), paste0("p < ", sigf))
+    cols <- c("gray50", "orange2", "red3")
+    siz = c(0.1, 0.25, 0.35)
+    # xy$siz[xy$p >= sig] <- 0.15
+    # xy$siz[xy$p < sig] <- 0.25
+    # xy$siz[xy$p < sig1] <- 0.3
+  } else {
+    lev <- c(paste0("p > ", sig), paste0("p < ", sig))
+    cols <- c("gray50", "red3")
+    size = c(0.1, 0.3)
+    # xy$siz[xy$p >= sig] <- 0.2
+    # xy$siz[xy$p < sig] <- 0.3
+  }
+  xy$pcat <- as.factor(xy$pcat)
+  
+  # Add categories
+  if (!is.null(cat)) {
+    if (length(cat) != ncol(new)) stop("Number of categories and exposures are different, please check!")
+    ycat <- c()
+    ytxt = c()
+    ycum = 0
+    for (c in unique(cat)) {
+      ycat <- c(ycat, length(grep(c, cat)) + 0.5 + ycum)
+      ytxt <- c(ytxt, (ycum + ycat[length(ycat)]) / 2)
+      ycum = ycum + length(grep(c, cat))
+    }
+    xtxt = row + 1
+    ycat <- ycat[1:(length(ycat) - 1)]
+    txt = unique(cat)
+  } else {
+    ycat = 0
+    xtxt = 0
+    ytxt = 0
+    txt = ""
+  }
+  
+  ### Make plot ###
+  p <- ggplot(xy, aes(x = x, y = y, color = pcat, size = pcat)) +
+    geom_point() +
+    geom_hline(yintercept = ycat, size = .2) +
+    annotate(geom = "text", x = xtxt, y = ytxt, label = txt, angle = 90, 
+             size = 1, fontface = 2) +
+    scale_x_continuous(breaks = unique(xy$x), labels = pull(data, xas), 
+                       name = NULL, expand = c(0.05, 0.05)) +
+    scale_y_continuous(breaks = unique(xy$y), labels = names(new), name = NULL,
+                       expand = c(0.005, 0.005)) +
+    my_theme() +
+    theme(panel.grid.major.x = element_line(colour = "gray90"),
+          axis.text.x.bottom = element_text(angle = 90, vjust = 0.5, hjust=1),
+          axis.line.x.top =  element_line(color = "black"),
+          axis.text.x.top = element_text(angle = -90, vjust = 0.5, hjust=1),
+          axis.line.y.right =  element_line(color = "black"),
+          axis.ticks.y.right = element_blank(),
+          axis.text.y.right = element_blank(),
+          legend.position = legend) +
+    guides(x.sec = "axis", y.sec = "axis") +
+    scale_color_manual(breaks = lev, values = cols, name = "Significance") +
+    scale_size_manual(breaks = lev, values = siz, name = "Significance") +
+    coord_cartesian(xlim = c(1, row), ylim = c(0, col + 1), clip = "off")
+  return(p)
+}

@@ -26,7 +26,7 @@ dat <- dat[order(dat[, 1], dat[, 7]),] %>% arrange(factor(Phenotype, levels = ph
 
 text <- data.frame()
 for (i in pheno) {
-
+  
   if (i == "Outcomes") {
     t <- c(i, "OR (95% CI)")
   } else {
@@ -224,7 +224,7 @@ rm(wt, cmr, ex, i)
 #   my_theme() 
 # ggsave("results/figures/Max_wall_thickness.svg", width = 6 * pix, height = 5  * pix)
 
- p1 <- ggplot(new, 
+p1 <- ggplot(new, 
              aes(x = factor(CM, levels = c("Controls", "ACM", "DCM", "HCM"),
                             labels = c("Controls G-P-", "ACM G+P-", "DCM G+P-", 
                                        "HCM G+P-")), 
@@ -327,3 +327,57 @@ ggarrange(p1, p1.1, p2, p2.1, p3, p4, labels = "AUTO",
 ggsave("results/figures/Figure6-CMR_box.pdf", paper = "a4",
        width = 8 * pix, height = 12 * pix)
 rm(p1, p1.1, p2, p2.1, p3, p4, new)
+
+
+# Incidence matrix all tests ----------------------------------------------
+
+### Prepare data ###
+# Make correct format
+dat <- read.delim("~/surfdrive/Mendelian_CM_WES_UKB/Difference_testing_v4.tsv") %>%
+  select(Phenotype, p, CM) %>% filter(!is.na(p)) %>%
+  tidyr::pivot_wider(names_from = Phenotype, values_from = p)
+
+# Change column names for beauty
+dat$CM <- as.factor(dat$CM)
+levels(dat$CM) <- c("ACM G+", "ACM/DCM G+ overlap", "Undiagnosed ACM G+", 
+                    "DCM G+", "DCM/ACM G+ overlap", "DCM/HCM G+ overlap", 
+                    "Undiagnosed DCM G+", "All diagnosed G+", "HCM G+", 
+                    "HCM/DCM G+ overlap", "Undiagnosed HCM G+", "Strict HCM G+",
+                    "Strict undiagnosed HCM G+")
+names(dat)[2:19] <- c("BMI", "MET minutes per week for walking", 
+                      "MET minutes per week for moderate activity", 
+                      "MET minutes per week for vigorous activity", 
+                      "Total MET minutes per week", "Total Cholesterol", "HDL", 
+                      "LDL", "Mean systolic blood pressure", 
+                      "Mean diastolic blood pressure", "ECG heart rate", 
+                      "P duration", "P axis", "PQ interval", "QRS duration", 
+                      "R axis", "QTC interval", "T axis")
+names(dat)[43:44] <- c("LVEDV/RVEDV", "LVESV/RVESV")
+names(dat)[c(45:63, 81:83, 85:89, 93)] <- gsub ("_", " ", 
+                                                names(dat)[c(45:63, 81:83, 85:89, 93)])
+names(dat)[c(72, 75:77, 84, 90, 92, 94, 95)] <- c("Ever smoked", 
+                                                  "Family heart disease", 
+                                                  "Cardiac problem", 
+                                                  "Heart failure",
+                                                  "Acute myocardial infarction",
+                                                  "Heart arrhythmia", 
+                                                  "Cardiovascular death",
+                                                  "Heart failure + cardiomyopathy",
+                                                  "Phenotype positive")
+
+# Remove and relocate columns
+out <- c("ECG heart rate", "Obesity")
+move <- c("Hypertension", "Diabetes", "Ever smoked", "Hypercholesterolaemia", 
+          "Family heart disease")
+dat <- dat %>% select(-any_of(out)) %>% relocate(any_of(move), .before = BMI)
+
+# Include categories
+cat <- c(rep("RISK FACTORS", 15), rep("ECG", 7),
+         rep("CMR MEASUREMENTS", 50), rep("CARDIAC OUTCOMES", 20))
+
+pdf("~/surfdrive/Mendelian_CM_WES_UKB/Figures and Tables/Incidence_matrix_v4.pdf",
+    height = 17 * pix, width = 7 * pix, paper = "a4")
+inc_mat(dat, sig1 = 0.05/nrow(dat)/(ncol(dat) - 1), xas = "CM", legend = "right", cat = cat)
+dev.off()
+ggsave("~/surfdrive/Mendelian_CM_WES_UKB/Figures and Tables/Incidence_matrix_v4.svg",
+       height = 16 * pix, width = 5 * pix)
