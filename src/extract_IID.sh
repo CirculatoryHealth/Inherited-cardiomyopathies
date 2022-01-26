@@ -96,8 +96,11 @@ else
   fi
   TEMP="${DIR}/${DIS}_temp"
   PLINK="/hpc/local/CentOS7/dhl_ec/software/plink_v1.9"
-  UKB_200K_WES="/hpc/ukbiobank/WES_200K_2020"
-  UKB_200K_WES_FAM='/hpc/dhl_ec/data/ukbiobank/WES_200K_2020'
+  UKB_200K_WES_BED="/hpc/ukbiobank/WES_200K_2020/UKBexomeOQFE_200K_chr"
+  UKB_200K_WES_BIM="/hpc/ukbiobank/WES_200K_2020/UKBexomeOQFE_200K_chr"
+  UKB_200K_WES_FAM="/hpc/dhl_ec/data/ukbiobank/WES_200K_2020/UKBexomeOQFE_200K_chr"
+  LV="/hpc/dhl_ec/aalasiri/CMR_metrics/PheWAS_MRI/ukb_MRI_LV_clean.txt"
+  RV="/hpc/dhl_ec/aalasiri/CMR_metrics/PheWAS_MRI/ukb_MRI_RV_clean.txt"
 
 
   echo ""
@@ -113,8 +116,8 @@ else
   ### STEP 2 ###
   ### overlap samples betwen 200K WES and LV/RV
   ## get IID of LV/RV MRI after QC
-  tail -n +2 /hpc/dhl_ec/aalasiri/CMR_metrics/PheWAS_MRI/ukb_MRI_LV_clean.txt | awk '{print $1,$1}' > ${TEMP}/ukb_MRI_LV_IID_clean.txt
-  tail -n +2 /hpc/dhl_ec/aalasiri/CMR_metrics/PheWAS_MRI/ukb_MRI_RV_clean.txt | awk '{print $1,$1}' > ${TEMP}/ukb_MRI_RV_IID_clean.txt
+  tail -n +2 ${LV} | awk '{print $1,$1}' > ${TEMP}/ukb_MRI_LV_IID_clean.txt
+  tail -n +2 ${RV} | awk '{print $1,$1}' > ${TEMP}/ukb_MRI_RV_IID_clean.txt
 
   # Adding indels to SNP-lists
   echo -e "$(sort -u ${INDEL} | wc -l | cut -d" " -f1) indels included" >> ${TEMP}/${DIS}_log
@@ -124,9 +127,9 @@ else
   rm ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.allele_frq
   for CHR in $(seq 1 22); do
     echo ${CHR}
-    ${PLINK} --bed ${UKB_200K_WES}/UKBexomeOQFE_200K_chr${CHR}_v1.bed \
-    --bim ${UKB_200K_WES}/UKBexomeOQFE_200K_chr${CHR}_v1.bim \
-    --fam ${UKB_200K_WES_FAM}/UKBexomeOQFE_200K_chr${CHR}_v1.fam \
+    ${PLINK} --bed ${UKB_200K_WES_BED}${CHR}.bed \
+    --bim ${UKB_200K_WES_BIM}${CHR}.bim \
+    --fam ${UKB_200K_WES_FAM}${CHR}.fam \
     --extract ${DIR}/${DIS}_overlap_LP_WES_SNPs.txt \
     --freq --out ${TEMP}/${DIS}_WES_MRI_UKB_chr${CHR}
     tail -n +2 ${TEMP}/${DIS}_WES_MRI_UKB_chr${CHR}.frq >> ${TEMP}/${DIS}_WES_MRI_UKB_chrALL.allele_frq
@@ -152,9 +155,9 @@ else
   for CHR in $(seq 1 22); do
     rm ${TEMP}/${DIS}_WES_MRI_UKB_chr${CHR}.vcf
     echo ${CHR}
-    ${PLINK} --bed ${UKB_200K_WES}/UKBexomeOQFE_200K_chr${CHR}_v1.bed \
-    --bim ${UKB_200K_WES}/UKBexomeOQFE_200K_chr${CHR}_v1.bim \
-    --fam ${UKB_200K_WES_FAM}/UKBexomeOQFE_200K_chr${CHR}_v1.fam \
+    ${PLINK} --bed ${UKB_200K_WES_BED}${CHR}.bed \
+    --bim ${UKB_200K_WES_BIM}${CHR}.bim \
+    --fam ${UKB_200K_WES_FAM}${CHR}.fam \
     --extract ${DIR}/${DIS}_overlap_LP_WES_SNPs_updated.txt \
     --recode vcf-iid \
     --keep-allele-order --out ${TEMP}/${DIS}_WES_MRI_UKB_chr${CHR}
