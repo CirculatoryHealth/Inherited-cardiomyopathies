@@ -8,6 +8,7 @@ core*
 *.txt_*
 *tab
 *info
+*swp
 
 # R files
 .Rproj.user

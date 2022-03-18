@@ -168,7 +168,7 @@ else
   DEP5h=$(sbatch --time=01:30:00 --mem 100G --dependency=afterok:${DEP3h} --output="${LOGS}/HCM_phenish.log" ${SCRIPT}/phenish.sh HCM ${OUTPUT}/${OUTPUT_FILE_NAME}_ukb_phenotypes.tab full.tsv | sed 's/Submitted batch job //')
   echo ""
   echo "Getting randomly matched IDs for the controls"
-  DEP6=$(sbatch --time=30:00 --dependency=afterok:${DEP5a},${DEP5d},${DEP5h} --output="${LOGS}/match_controls.Rlog" --wrap="Rscript --vanilla Match_controls.R data/raw _full.txt results/figures/UKB_MCM_Summary.pptx")
+  DEP6=$(sbatch --time=30:00 --dependency=afterok:${DEP5a},${DEP5d},${DEP5h} --output="${LOGS}/match_controls.Rlog" --wrap="Rscript --vanilla Match_controls.R data/raw _full.tsv results/figures/UKB_MCM_Summary.pptx")
   echo ""
   echo "Combining and cleaning up phenotypes"
   DEP7=$(sbatch --dependency=afterok:${DEP6} --output="${LOGS}/clean_pheno.log" ${SCRIPT}/clean_pheno.sh)
