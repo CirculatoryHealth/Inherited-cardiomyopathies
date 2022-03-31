@@ -15,20 +15,12 @@ pheno <- c("Outcomes", "Heart_Failure", "Cardiomyopathy", "HFCM", "Pheno",
            "Ventricular_arrhythmias", "Atrial_arrhythmias", "Heart_Arrhythmia", 
            "Chronic_ischaemic_heart_disease", "Angina", 
            "Cardiovascular_Death", "All_cause_mortality")
-dat <- read.delim("results/output/Differences_genes.tsv") %>%
-    filter(Gene %in% c("DES", "PKP2", "BAG3", "FLNC", "MYH7", "TNNC1", "TTN", "JPH2", "MYBPC3")) %>%
-    filter(Phenotype %in% pheno) %>% arrange(factor(Phenotype, levels = pheno)) 
-# dat <- read.delim("~/surfdrive/Mendelian_CM_WES_UKB/Difference_testing_v4.tsv") %>%
-#   filter(CM %in% c("ACM", "DCM", "HCM", "strict HCM")) %>% 
-#   filter(Phenotype %in% pheno) %>% arrange(factor(Phenotype, levels = pheno)) 
-# dat$CM <- paste0(dat$CM, " G+")
-# dat$CM[dat$CM == "strict HCM G+"] <- "HCM* G+"
-
-# Include some extra rows for the forest plot header
-ex <- data.frame(Phenotype = "Outcomes", OR = NA, new = NA, old = NA, 
-                 pvalue = NA, levels(as.factor(dat$CM)), Gene = NA)
-names(ex) <- names(dat)
-dat <- rbind(dat, ex)
+dat <- read.delim("~/surfdrive/Mendelian_CM_WES_UKB/Difference_testing_v4.tsv") %>%
+  filter(CM %in% c("ACM", "DCM", "HCM", "strict HCM")) %>%
+  filter(Phenotype %in% pheno) %>% arrange(factor(Phenotype, levels = pheno))
+dat$CM[dat$CM == "ACM"] <- "ARVC"
+dat$CM <- paste0(dat$CM, " G+")
+dat$CM[dat$CM == "strict HCM G+"] <- "HCM* G+"
 
 dat[, 2:4] <- lapply(dat[, 2:4], as.numeric)
 dat <- dat[order(dat[, 1], dat[, 7]),] %>% arrange(factor(Phenotype, levels = pheno)) 
@@ -40,10 +32,18 @@ for (i in pheno) {
     t <- c(i, "OR (95% CI)")
   } else {
     temp <- dat %>% filter(Phenotype == i)
-    t <- c(i, paste0(format(round(temp[1, 2], 2), nsmall = 2), " (", format(round(temp[1, 3], 2), nsmall = 2), ";", format(round(temp[1, 4], 2), nsmall = 2), ")\n",
-                     format(round(temp[2, 2], 2), nsmall = 2), " (", format(round(temp[2, 3], 2), nsmall = 2), ";", format(round(temp[2, 4], 2), nsmall = 2), ")\n",
-                     format(round(temp[3, 2], 2), nsmall = 2), " (", format(round(temp[3, 3], 2), nsmall = 2), ";", format(round(temp[3, 4], 2), nsmall = 2), ")\n",
-                     format(round(temp[4, 2], 2), nsmall = 2), " (", format(round(temp[4, 3], 2), nsmall = 2), ";", format(round(temp[4, 4], 2), nsmall = 2), ")"))
+    for (g in 1:nrow(temp)) {
+      # Paste together the OR and 95% CI into text
+      s <- paste0(format(round(temp[g, 2], 2), nsmall = 2), " (", format(round(temp[g, 3], 2), nsmall = 2), ";", format(round(temp[g, 4], 2), nsmall = 2), ")")
+      if (g == 1) {
+        # Create variable 
+        p <- s
+      } else {
+        # Paste with newline to variable p
+        p <- paste0(p, "\n", s)
+      } # end if first gene
+      t <- c(i, p)
+    } # iterate over CMs  
   }
   text <- rbind(text, t)
   text[1:2] <- lapply(text[1:2], as.character)
@@ -54,8 +54,9 @@ text[,1][text[, 1] == "HFCM"] <- "Heart failure + cardiomyopathy"
 text[,1][text[, 1] == "Pheno"] <- "Phenotype positive"
 text[,1][text[, 1] == "Angina"] <- "Angina pectoris"
 text[,1][text[, 1] == "Chronic ischaemic heart disease"] <- "Chronic ischemic heart disease"
-text[,1][text[, 1] == "Heart Arrhythmia"] <- "Heart arrhythmia"
+text[,1][text[, 1] == "Heart Arrhythmia"] <- "Self-reported heart arrhythmias"
 text[,1][text[, 1] == "Cardiovascular Death"] <- "Cardiovascular death"
+text[,1][text[, 1] == "All cause mortality"] <- "All-cause mortality"
 
 pdf("~/surfdrive/Mendelian_CM_WES_UKB/FigureS1.pdf", paper = "a4",
     width = 10 * pix, height = 12 * pix)
@@ -82,9 +83,18 @@ for (i in pheno) {
     t <- c(i, "OR (95% CI)")
   } else {
     temp <- dat %>% filter(Phenotype == i)
-    t <- c(i, paste0(format(round(temp[1, 2], 2), nsmall = 2), " (", format(round(temp[1, 3], 2), nsmall = 2), ";", format(round(temp[1, 4], 2), nsmall = 2), ")\n",
-                     format(round(temp[2, 2], 2), nsmall = 2), " (", format(round(temp[2, 3], 2), nsmall = 2), ";", format(round(temp[2, 4], 2), nsmall = 2), ")\n",
-                     format(round(temp[3, 2], 2), nsmall = 2), " (", format(round(temp[3, 3], 2), nsmall = 2), ";", format(round(temp[3, 4], 2), nsmall = 2), ")"))
+    for (g in 1:nrow(temp)) {
+      # Paste together the OR and 95% CI into text
+      s <- paste0(format(round(temp[g, 2], 2), nsmall = 2), " (", format(round(temp[g, 3], 2), nsmall = 2), ";", format(round(temp[g, 4], 2), nsmall = 2), ")")
+      if (g == 1) {
+        # Create variable 
+        p <- s
+      } else {
+        # Paste with newline to variable p
+        p <- paste0(p, "\n", s)
+      } # end if first gene
+      t <- c(i, p)
+    } # iterate over CMs  
   }
   text <- rbind(text, t)
   text[1:2] <- lapply(text[1:2], as.character)
@@ -95,10 +105,11 @@ text[,1][text[, 1] == "HFCM"] <- "Heart failure + cardiomyopathy"
 text[,1][text[, 1] == "Pheno"] <- "Phenotype positive"
 text[,1][text[, 1] == "Angina"] <- "Angina pectoris"
 text[,1][text[, 1] == "Chronic ischaemic heart disease"] <- "Chronic ischemic heart disease"
-text[,1][text[, 1] == "Heart Arrhythmia"] <- "Heart arrhythmia"
+text[,1][text[, 1] == "Heart Arrhythmia"] <- "Self-reported heart arrhythmias"
 text[,1][text[, 1] == "Cardiovascular Death"] <- "Cardiovascular death"
+text[,1][text[, 1] == "All cause mortality"] <- "All-cause mortality"
 
-pdf("~/surfdrive/Mendelian_CM_WES_UKB/Figure3.pdf", paper = "a4",
+pdf("~/surfdrive/Mendelian_CM_WES_UKB/Figure4.pdf", paper = "a4",
     width = 10 * pix, height = 9 * pix)
 dat %>% group_by(CM) %>% 
   forestplot(labeltext = text, mean = Estimate, lower = LCI, upper = UCI, zero = 1, 
@@ -122,21 +133,21 @@ rm(dat, temp, text, i, pheno, t)
 df <- read.delim("data/processed/MCM_clean_final.tsv")
 acm <- df %>% filter(CM == "ACM")
 grid.newpage()
-v1 <- draw.quad.venn(area1 = nrow(subset(acm, Heart_Failure_sum == "Yes")), 
-                     area2 = nrow(subset(acm, Cardiomyopathy_sum == "Yes")), 
-                     area3 = nrow(subset(acm, Chronic_ischaemic_heart_disease_sum == "Yes")), 
-                     area4 = nrow(subset(acm, Ventricular_arrhythmias_sum == "Yes")),
-                     n12 = nrow(subset(acm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes")), 
-                     n13 = nrow(subset(acm, Heart_Failure_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes")), 
-                     n14 = nrow(subset(acm, Heart_Failure_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")), 
-                     n23 = nrow(subset(acm, Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes")), 
-                     n24 = nrow(subset(acm, Cardiomyopathy_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")), 
-                     n34 = nrow(subset(acm, Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")),
-                     n123 = nrow(subset(acm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes")), 
-                     n124 = nrow(subset(acm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")), 
-                     n134 = nrow(subset(acm, Heart_Failure_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")), 
-                     n234 = nrow(subset(acm, Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")), 
-                     n1234 = nrow(subset(acm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")),
+v1 <- draw.quad.venn(area1 = round(nrow(subset(acm, Heart_Failure_sum == "Yes")) / nrow(acm) * 100, 1),
+                     area2 = round(nrow(subset(acm, Cardiomyopathy_sum == "Yes")) / nrow(acm) * 100, 1),
+                     area3 = round(nrow(subset(acm, Chronic_ischaemic_heart_disease_sum == "Yes")) / nrow(acm) * 100,  1),
+                     area4 = round(nrow(subset(acm, Ventricular_arrhythmias_sum == "Yes")) / nrow(acm) * 100, 1),
+                     n12 = round(nrow(subset(acm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes")) / nrow(acm) * 100,  1),
+                     n13 = round(nrow(subset(acm, Heart_Failure_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes")) / nrow(acm) * 100,  1),
+                     n14 = round(nrow(subset(acm, Heart_Failure_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(acm) * 100,  1),
+                     n23 = round(nrow(subset(acm, Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes")) / nrow(acm) * 100,  1),
+                     n24 = round(nrow(subset(acm, Cardiomyopathy_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(acm) * 100,  1),
+                     n34 = round(nrow(subset(acm, Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(acm) * 100, 1),
+                     n123 = round(nrow(subset(acm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes")) / nrow(acm) * 100,  1),
+                     n124 = round(nrow(subset(acm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(acm) * 100,  1),
+                     n134 = round(nrow(subset(acm, Heart_Failure_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(acm) * 100,  1),
+                     n234 = round(nrow(subset(acm, Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(acm) * 100,  1),
+                     n1234 = round(nrow(subset(acm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(acm) * 100, 1),
                      fill = c("#ffd167", "#4cbd97", "#168ab2", "#ef476f"), 
                      cat.cex = rep(.3, 4), cex = rep(.3, 15), 
                      alpha = rep(0.8, 4), lwd = rep(.2, 4),
@@ -147,21 +158,21 @@ v1 <- draw.quad.venn(area1 = nrow(subset(acm, Heart_Failure_sum == "Yes")),
 
 dcm <- df %>% filter(CM == "DCM")
 grid.newpage()
-v2 <- draw.quad.venn(area1 = nrow(subset(dcm, Heart_Failure_sum == "Yes")), 
-                     area2 = nrow(subset(dcm, Cardiomyopathy_sum == "Yes")), 
-                     area3 = nrow(subset(dcm, Chronic_ischaemic_heart_disease_sum == "Yes")), 
-                     area4 = nrow(subset(dcm, Ventricular_arrhythmias_sum == "Yes")),
-                     n12 = nrow(subset(dcm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes")), 
-                     n13 = nrow(subset(dcm, Heart_Failure_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes")), 
-                     n14 = nrow(subset(dcm, Heart_Failure_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")), 
-                     n23 = nrow(subset(dcm, Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes")), 
-                     n24 = nrow(subset(dcm, Cardiomyopathy_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")), 
-                     n34 = nrow(subset(dcm, Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")),
-                     n123 = nrow(subset(dcm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes")), 
-                     n124 = nrow(subset(dcm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")), 
-                     n134 = nrow(subset(dcm, Heart_Failure_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")), 
-                     n234 = nrow(subset(dcm, Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")), 
-                     n1234 = nrow(subset(dcm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")),
+v2 <- draw.quad.venn(area1 = round(nrow(subset(dcm, Heart_Failure_sum == "Yes")) / nrow(dcm) * 100, 1),
+                     area2 = round(nrow(subset(dcm, Cardiomyopathy_sum == "Yes")) / nrow(dcm) * 100, 1), 
+                     area3 = round(nrow(subset(dcm, Chronic_ischaemic_heart_disease_sum == "Yes")) / nrow(dcm) * 100, 1), 
+                     area4 = round(nrow(subset(dcm, Ventricular_arrhythmias_sum == "Yes")) / nrow(dcm) * 100, 1),
+                     n12 = round(nrow(subset(dcm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes")) / nrow(dcm) * 100, 1), 
+                     n13 = round(nrow(subset(dcm, Heart_Failure_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes")) / nrow(dcm) * 100, 1), 
+                     n14 = round(nrow(subset(dcm, Heart_Failure_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(dcm) * 100, 1), 
+                     n23 = round(nrow(subset(dcm, Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes")) / nrow(dcm) * 100, 1), 
+                     n24 = round(nrow(subset(dcm, Cardiomyopathy_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(dcm) * 100, 1), 
+                     n34 = round(nrow(subset(dcm, Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(dcm) * 100, 1),
+                     n123 = round(nrow(subset(dcm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes")) / nrow(dcm) * 100, 1), 
+                     n124 = round(nrow(subset(dcm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(dcm) * 100, 1), 
+                     n134 = round(nrow(subset(dcm, Heart_Failure_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(dcm) * 100, 1), 
+                     n234 = round(nrow(subset(dcm, Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(dcm) * 100, 1), 
+                     n1234 = round(nrow(subset(dcm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(dcm) * 100, 1),
                      fill = c("#ffd167", "#4cbd97", "#168ab2", "#ef476f"), 
                      cat.cex = rep(.3, 4), cex = rep(.3, 15), 
                      alpha = rep(0.8, 4), lwd = rep(.2, 4),
@@ -172,21 +183,21 @@ v2 <- draw.quad.venn(area1 = nrow(subset(dcm, Heart_Failure_sum == "Yes")),
 
 hcm <- df %>% filter(CM == "HCM")
 grid.newpage()
-v3 <- draw.quad.venn(area1 = nrow(subset(hcm, Heart_Failure_sum == "Yes")), 
-                     area2 = nrow(subset(hcm, Cardiomyopathy_sum == "Yes")), 
-                     area3 = nrow(subset(hcm, Chronic_ischaemic_heart_disease_sum == "Yes")), 
-                     area4 = nrow(subset(hcm, Ventricular_arrhythmias_sum == "Yes")),
-                     n12 = nrow(subset(hcm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes")), 
-                     n13 = nrow(subset(hcm, Heart_Failure_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes")), 
-                     n14 = nrow(subset(hcm, Heart_Failure_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")), 
-                     n23 = nrow(subset(hcm, Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes")), 
-                     n24 = nrow(subset(hcm, Cardiomyopathy_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")), 
-                     n34 = nrow(subset(hcm, Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")),
-                     n123 = nrow(subset(hcm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes")), 
-                     n124 = nrow(subset(hcm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")), 
-                     n134 = nrow(subset(hcm, Heart_Failure_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")), 
-                     n234 = nrow(subset(hcm, Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")), 
-                     n1234 = nrow(subset(hcm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")),
+v3 <- draw.quad.venn(area1 = round(nrow(subset(hcm, Heart_Failure_sum == "Yes")) / nrow(hcm) * 100, 1),
+                     area2 = round(nrow(subset(hcm, Cardiomyopathy_sum == "Yes")) / nrow(hcm) * 100, 1), 
+                     area3 = round(nrow(subset(hcm, Chronic_ischaemic_heart_disease_sum == "Yes")) / nrow(hcm) * 100, 1), 
+                     area4 = round(nrow(subset(hcm, Ventricular_arrhythmias_sum == "Yes")) / nrow(hcm) * 100, 1),
+                     n12 = round(nrow(subset(hcm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes")) / nrow(hcm) * 100, 1), 
+                     n13 = round(nrow(subset(hcm, Heart_Failure_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes")) / nrow(hcm) * 100, 1), 
+                     n14 = round(nrow(subset(hcm, Heart_Failure_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(hcm) * 100, 1), 
+                     n23 = round(nrow(subset(hcm, Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes")) / nrow(hcm) * 100, 1), 
+                     n24 = round(nrow(subset(hcm, Cardiomyopathy_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(hcm) * 100, 1), 
+                     n34 = round(nrow(subset(hcm, Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(hcm) * 100, 1),
+                     n123 = round(nrow(subset(hcm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes")) / nrow(hcm) * 100, 1), 
+                     n124 = round(nrow(subset(hcm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(hcm) * 100, 1), 
+                     n134 = round(nrow(subset(hcm, Heart_Failure_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(hcm) * 100, 1), 
+                     n234 = round(nrow(subset(hcm, Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(hcm) * 100, 1), 
+                     n1234 = round(nrow(subset(hcm, Heart_Failure_sum == "Yes" & Cardiomyopathy_sum == "Yes" & Chronic_ischaemic_heart_disease_sum == "Yes" & Ventricular_arrhythmias_sum == "Yes")) / nrow(hcm) * 100, 1),
                      fill = c("#ffd167", "#4cbd97", "#168ab2", "#ef476f"), 
                      cat.cex = rep(.3, 4), cex = rep(.3, 15), 
                      alpha = rep(0.8, 4), lwd = rep(.2, 4),
@@ -195,10 +206,10 @@ v3 <- draw.quad.venn(area1 = nrow(subset(hcm, Heart_Failure_sum == "Yes")),
                      category = c("HF", "CM", "Ischemia", "VA"))
 # ggsave("results/figures/HCM_venn.svg", v3)
 
-ggarrange(v1, v2, v3, labels = c("A) ACM G+", "B) DCM G+", "C) HCM G+"), ncol = 3,
+ggarrange(v1, v2, v3, labels = c("A) ARVC G+", "B) DCM G+", "C) HCM G+"), ncol = 3,
           font.label = list(size = 4, color = "black", face = "bold", 
                             family = "Helvetica"))
-ggsave("results/figures/Figure4-Venn.pdf", paper = "a4",
+ggsave("results/figures/Figure5.pdf", paper = "a4",
        width = 14 * pix, height = 4 * pix)
 rm(v1, v2, v3, acm, dcm, hcm)
 
@@ -213,13 +224,13 @@ cmr <- df %>% select(starts_with("RV"), starts_with("LV"), contains("Wall_thickn
 new <- df %>% select(f.eid, BSA, CM, Pheno, Sex, any_of(cmr)) %>% 
   filter(Pheno == "Non-Diagnosed") %>% filter(CM %in% c("Controls", "ACM", "DCM", "HCM"))
 
-wt <- new %>% select(eid.UMC, contains("AHA"))
+wt <- new %>% select(1, contains("segment"))
 wt$Max_WT <- NA
 for (i in 1:nrow(wt)) {
   wt[i, "Max_WT"] <- max(wt[i, 2:(ncol(wt)-1)])
   wt$Max_WT <- as.numeric(wt$Max_WT)
 }
-wt <- wt %>% select(eid.UMC, Max_WT)
+wt <- wt %>% select(1, Max_WT)
 new <- merge(new, unique(wt))
 new$Max_WT[new$Max_WT == 0] <- NA
 rm(wt, cmr, ex, i)
@@ -236,7 +247,7 @@ ggsave("/hpc/dhl_ec/data/uk_biobank/projects/LoF_CMR/results/figures/Wall_thickn
 
 p1 <- ggplot(new, 
              aes(x = factor(CM, levels = c("Controls", "ACM", "DCM", "HCM"),
-                            labels = c("Controls G-P-", "ACM G+P-", "DCM G+P-", 
+                            labels = c("Controls G-P-", "ARVC G+P-", "DCM G+P-", 
                                        "HCM G+P-")), 
                  y = LVEF, fill = CM)) +
   geom_boxplot(outlier.shape = 18, outlier.size = .4, alpha = 0.9, 
@@ -253,7 +264,7 @@ p1 <- ggplot(new,
 
 p1.1 <- ggplot(new, 
                aes(x = factor(CM, levels = c("Controls", "ACM", "DCM", "HCM"),
-                              labels = c("Controls G-P-", "ACM G+P-", "DCM G+P-", 
+                              labels = c("Controls G-P-", "ARVC G+P-", "DCM G+P-", 
                                          "HCM G+P-")), 
                    y = RVEF, fill = CM)) +
   geom_boxplot(outlier.shape = 18, outlier.size = .4, alpha = 0.9, 
@@ -270,7 +281,7 @@ p1.1 <- ggplot(new,
 
 p2 <- ggplot(new, 
              aes(x = factor(CM, levels = c("Controls", "ACM", "DCM", "HCM"),
-                            labels = c("Controls G-P-", "ACM G+P-", "DCM G+P-", 
+                            labels = c("Controls G-P-", "ARVC G+P-", "DCM G+P-", 
                                        "HCM G+P-")), 
                  y = LVEDVi, fill = CM)) +
   geom_boxplot(outlier.shape = 18, outlier.size = .4, alpha = 0.9, 
@@ -284,7 +295,7 @@ p2 <- ggplot(new,
 
 p2.1 <- ggplot(new, 
                aes(x = factor(CM, levels = c("Controls", "ACM", "DCM", "HCM"),
-                              labels = c("Controls G-P-", "ACM G+P-", "DCM G+P-", 
+                              labels = c("Controls G-P-", "ARVC G+P-", "DCM G+P-", 
                                          "HCM G+P-")), 
                    y = RVEDVi, fill = CM)) +
   geom_boxplot(outlier.shape = 18, outlier.size = .4, alpha = 0.9, 
@@ -301,7 +312,7 @@ p2.1 <- ggplot(new,
 
 p3 <- ggplot(new, 
              aes(x = factor(CM, levels = c("Controls", "ACM", "DCM", "HCM"),
-                            labels = c("Controls G-P-", "ACM G+P-", "DCM G+P-", 
+                            labels = c("Controls G-P-", "ARVC G+P-", "DCM G+P-", 
                                        "HCM G+P-")), 
                  y = Max_wall_thickness, fill = CM)) +
   geom_boxplot(outlier.shape = 18, outlier.size = .4, alpha = 0.9, 
@@ -315,7 +326,7 @@ p3 <- ggplot(new,
 
 p4 <- ggplot(new, 
              aes(x = factor(CM, levels = c("Controls", "ACM", "DCM", "HCM"),
-                            labels = c("Controls G-P-", "ACM G+P-", "DCM G+P-", 
+                            labels = c("Controls G-P-", "ARVC G+P-", "DCM G+P-", 
                                        "HCM G+P-")), 
                  y = peakEll4Ch, fill = CM)) +
   geom_boxplot(outlier.shape = 18, outlier.size = .4, alpha = 0.9, 
@@ -334,7 +345,7 @@ ggarrange(p1, p1.1, p2, p2.1, p3, p4, labels = "AUTO",
           font.label = list(size = 3.5, color = "black", face = "bold", 
                             family = "Helvetica"),
           ncol = 2, nrow = 3)
-ggsave("results/figures/Figure6-CMR_box.pdf", paper = "a4",
+ggsave("results/figures/Figure6.pdf", paper = "a4",
        width = 8 * pix, height = 12 * pix)
 rm(p1, p1.1, p2, p2.1, p3, p4, new)
 

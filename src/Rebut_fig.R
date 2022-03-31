@@ -46,7 +46,6 @@ for (cm in c("ACM", "DCM", "HCM")) {
 
     dat[, 2:4] <- lapply(dat[, 2:4], as.numeric)
     dat <- dat[order(dat[, 1], dat[, 6]),] %>% arrange(factor(Phenotype, levels = pheno)) 
-    # dat <- dat[order(dat[, 1], dat[, 7]),] %>% arrange(factor(Phenotype, levels = pheno)) 
     names(dat) <- c("Phenotype", "mean", "lower", "upper", "pvalue", "CM", "Gene")
 
     text <- data.frame()
@@ -78,7 +77,7 @@ for (cm in c("ACM", "DCM", "HCM")) {
     text[,1][text[, 1] == "Pheno"] <- "Phenotype positive"
     text[,1][text[, 1] == "Angina"] <- "Angina pectoris"
     text[,1][text[, 1] == "Chronic ischaemic heart disease"] <- "Chronic ischemic heart disease"
-    text[,1][text[, 1] == "Heart Arrhythmia"] <- "Heart arrhythmia"
+    text[,1][text[, 1] == "Heart Arrhythmia"] <- "Self-reported heart arrhythmias"
     text[,1][text[, 1] == "Cardiovascular Death"] <- "Cardiovascular death"
 
     # Remove strange values that raise errors in plotting
