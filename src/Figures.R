@@ -15,11 +15,20 @@ pheno <- c("Outcomes", "Heart_Failure", "Cardiomyopathy", "HFCM", "Pheno",
            "Ventricular_arrhythmias", "Atrial_arrhythmias", "Heart_Arrhythmia", 
            "Chronic_ischaemic_heart_disease", "Angina", 
            "Cardiovascular_Death", "All_cause_mortality")
-dat <- read.delim("~/surfdrive/Mendelian_CM_WES_UKB/Difference_testing_v4.tsv") %>%
-  filter(CM %in% c("ACM", "DCM", "HCM", "strict HCM")) %>% 
-  filter(Phenotype %in% pheno) %>% arrange(factor(Phenotype, levels = pheno)) 
-dat$CM <- paste0(dat$CM, " G+")
-dat$CM[dat$CM == "strict HCM G+"] <- "HCM* G+"
+dat <- read.delim("results/output/Differences_genes.tsv") %>%
+    filter(Gene %in% c("DES", "PKP2", "BAG3", "FLNC", "MYH7", "TNNC1", "TTN", "JPH2", "MYBPC3")) %>%
+    filter(Phenotype %in% pheno) %>% arrange(factor(Phenotype, levels = pheno)) 
+# dat <- read.delim("~/surfdrive/Mendelian_CM_WES_UKB/Difference_testing_v4.tsv") %>%
+#   filter(CM %in% c("ACM", "DCM", "HCM", "strict HCM")) %>% 
+#   filter(Phenotype %in% pheno) %>% arrange(factor(Phenotype, levels = pheno)) 
+# dat$CM <- paste0(dat$CM, " G+")
+# dat$CM[dat$CM == "strict HCM G+"] <- "HCM* G+"
+
+# Include some extra rows for the forest plot header
+ex <- data.frame(Phenotype = "Outcomes", OR = NA, new = NA, old = NA, 
+                 pvalue = NA, levels(as.factor(dat$CM)), Gene = NA)
+names(ex) <- names(dat)
+dat <- rbind(dat, ex)
 
 dat[, 2:4] <- lapply(dat[, 2:4], as.numeric)
 dat <- dat[order(dat[, 1], dat[, 7]),] %>% arrange(factor(Phenotype, levels = pheno)) 
@@ -204,25 +213,26 @@ cmr <- df %>% select(starts_with("RV"), starts_with("LV"), contains("Wall_thickn
 new <- df %>% select(f.eid, BSA, CM, Pheno, Sex, any_of(cmr)) %>% 
   filter(Pheno == "Non-Diagnosed") %>% filter(CM %in% c("Controls", "ACM", "DCM", "HCM"))
 
-wt <- new %>% select(f.eid, contains("segment"))
+wt <- new %>% select(eid.UMC, contains("AHA"))
 wt$Max_WT <- NA
 for (i in 1:nrow(wt)) {
   wt[i, "Max_WT"] <- max(wt[i, 2:(ncol(wt)-1)])
   wt$Max_WT <- as.numeric(wt$Max_WT)
 }
-wt <- wt %>% select(f.eid, Max_WT)
+wt <- wt %>% select(eid.UMC, Max_WT)
 new <- merge(new, unique(wt))
 new$Max_WT[new$Max_WT == 0] <- NA
 rm(wt, cmr, ex, i)
 
 # Make plots
-# ggplot(new, aes(x = Max_WT, fill = Sex)) +
-#   geom_histogram(position = "dodge") + 
-#   labs(x = "Maximum LV wall thickness (mm)", y = "Count",
-#        title = "Distribution of Maximum Left Ventricular wall thickness") +
-#   scale_fill_manual(values = c("tomato4", "cornflowerblue")) +
-#   my_theme() 
-# ggsave("results/figures/Max_wall_thickness.svg", width = 6 * pix, height = 5  * pix)
+ggplot(new, aes(x = Max_WT, fill = Sex)) +
+  geom_histogram(position = "dodge") + 
+  labs(x = "Maximum LV wall thickness (mm)", y = "Count",
+       title = "Distribution of Maximum Left Ventricular wall thickness") +
+  scale_fill_manual(values = c("tomato4", "cornflowerblue")) +
+  my_theme() 
+ggsave("/hpc/dhl_ec/data/uk_biobank/projects/LoF_CMR/results/figures/Wall_thickness_all.svg",
+       width = 6 * pix, height = 5  * pix)
 
 p1 <- ggplot(new, 
              aes(x = factor(CM, levels = c("Controls", "ACM", "DCM", "HCM"),

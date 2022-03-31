@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 ## Script information ---------------------------
 ##
 ## Script name: MCM_baselinetable.R
