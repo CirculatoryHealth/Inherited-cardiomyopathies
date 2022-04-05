@@ -9,6 +9,7 @@ core*
 *tab
 *info
 *swp
+_archive_/*
 
 # R files
 .Rproj.user

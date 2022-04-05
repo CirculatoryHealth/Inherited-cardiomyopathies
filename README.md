@@ -5,14 +5,14 @@
 
 
 
-> This README and repository accompanies the paper _"Penetrance and disease expression of (likely) pathogenic variants associated with inherited cardiomyopathies in the general population"_ by [Bourfiss M. *et al*. **medRxiv 2022**](https://doi.org/10.1101/2022.01.06.22268837).
+> This README and repository accompany the paper _"Penetrance and disease expression of (likely) pathogenic variants associated with inherited cardiomyopathies in the general population"_ by [Bourfiss M. *et al*. **medRxiv 2022**](https://doi.org/10.1101/2022.01.06.22268837).
 --------------
 
 
 (Likely) pathogenic variants associated with arrhythmogenic cardiomyopathy (ACM), dilated cardiomyopathy (DCM) and hypertrophic cardiomyopathy (HCM) are recommended to be reported as secondary findings in genome sequencing studies. This provides opportunities for early diagnosis, but also fuels uncertainty in variant carriers (G+), since disease penetrance is incomplete. We assessed the prevalence and disease expression of G+ in the general population.
 
 # Methods
-:warning: Scripts and examples in this repository are shared for transparency purpose and may therefore not work on other systems.
+:warning: Scripts and examples in this repository are shared for transparency purpose only and may therefore not work on other systems without modifications.
 ## Genetic variants in the study population
 We identified carriers of a (likely) pathogenic variant associated with ACM, DCM or HCM in individuals from the UK Biobank who underwent WES (n=200,643 at time of analysis). For each inherited cardiomyopathy we selected curated genes classified to have definite, strong or moderate evidence of pathogenicity (see Figure 1).
 

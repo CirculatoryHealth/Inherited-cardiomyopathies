@@ -1,0 +1,83 @@
+##############################################################################
+#####                         Configuration file                         #####
+#####                                                                    #####
+##### Written by:  Marion van Vugt                                       #####
+##### E-mail:      m.vanvugt-2@umcutrecht.nl                             #####
+##### Last update: 2022/04/13                                            #####
+#####                                                                    #####
+##############################################################################
+
+
+##############################################################################
+#####            Environment depening variables -- CHANGE these          #####
+##############################################################################
+
+### Tools
+# Path to plink executive
+PLINK="/hpc/local/CentOS7/dhl_ec/software/plink_v1.9"
+
+### Files and directories
+# Path to UK Biobank WES data (and fam-files)
+UKB_200K_WES="/hpc/ukbiobank/WES_200K_2020"
+UKB_200K_WES_FAM='/hpc/dhl_ec/data/ukbiobank/WES_200K_2020'
+# Path to and name of the bim/bed/fam files before the chromosome number
+FIL_NAM="UKBexomeOQFE_200K_chr"
+# Name of bim/bed/fam files after the chromosome number
+ADD="_v1"
+# Path to and name of one of the fam files
+FAM="${UKB_200K_WES_FAM}/UKBexomeOQFE_200K_chr22_v1.fam"
+
+# Path to and name of UKB phenotype file
+INPUT_TAB_FILE="/hpc/dhl_ec/data/ukbiobank/phenotypic/ukb44641.tab"
+# Path to and nume of full CMR data
+FULL_CMR="/hpc/dhl_ec/mvanvugt/UKBB/Inherited-cardiomyopathies/data/temp/CMR_complete_data.txt"
+# Files with IDs of UKB participants for whom LV and RV data is available
+LV="/hpc/dhl_ec/aalasiri/CMR_metrics/PheWAS_MRI/ukb_MRI_LV_clean.txt"
+RV="/hpc/dhl_ec/aalasiri/CMR_metrics/PheWAS_MRI/ukb_MRI_RV_clean.txt"
+
+### Options
+# Number of controls to be picked per case
+MUL="4"
+
+
+##############################################################################
+#####                             Directories                            #####
+##############################################################################
+
+# Root directory
+ROOT="/hpc/dhl_ec/mvanvugt/UKBB/Inherited-cardiomyopathies"
+
+# Script directory
+SCRIPT="${ROOT}/src"
+
+# Other folders below ${ROOT} used in the scripts
+RAW="${ROOT}/data/raw"
+TEMP="${ROOT}/data/temp"
+
+
+##############################################################################
+#####                                Files                               #####
+##############################################################################
+
+# File with phenotypes to be extracted from UKB
+INPUT_FIELD_ID="${ROOT}/data/raw/MendCM_phenotype.tsv"
+# File with phenotypes to be extracted for matching controls
+CONTROL_FIELDS="${ROOT}/data/raw/select_match_phenotypes.tsv"
+
+
+##############################################################################
+#####                                Tools                               #####
+##############################################################################
+
+OVERLAP="${ROOT}/bin/overlap.pl"
+MERGE="${ROOT}/bin/merge_tables.pl"
+TRANSPOSE="${ROOT}/bin/transpose_perl.pl"
+
+
+##############################################################################
+#####                               Options                              #####
+##############################################################################
+
+# Prefix of output
+OUTPUT_FILE_NAME="MCM"
+
