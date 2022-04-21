@@ -48,11 +48,7 @@ We identified pathogenic and likely pathogenic variants associated with ARVC, DC
 
 ## Results
 
-We found a prevalence of 1:578, 1:251 and 1:149 for (likely) pathogenic variants associated with ARVC, DCM and HCM respectively. Compared to controls, cardiovascular mortality was higher in DCM G+ (OR 1.67 [95% CI 1.04;2.59], p=0.030), but similar in ARVC and HCM G+ (p≥0.100). More specifically, cardiomyopathy or heart failure diagnosis were more frequent in DCM G+ (OR 3.66 [95% CI 2.24;5.81], p=4.9×10-7) and HCM G+ (OR 3.03 [95% CI 1.98;4.56], p=5.8×10-7), but comparable in ARVC G+ (p=0.172). In contrast, ARVC G+ had more ventricular arrhythmias (p=3.3×10-4) (**Figure 4**). In undiagnosed individuals, left ventricular ejection fraction was reduced in DCM G+ (p=0.009).
-![Forest plot cardiac outcomes stratified per inherited cardiomyopathy](results/figures/Figure4.svg)
-**Figure 4: Forest plot cardiac outcomes stratified per inherited cardiomyopathy**
-Odds ratios and 95% confidence interval are given for the associations between cardiac outcomes and ARVC, DCM, or HCM pathogenic variant carriers.
-*Abbreviations: ARVC= arrhythmogenic right ventricular cardiomyopathy; DCM= dilated cardiomyopathy; G+= pathogenic variant carrier; HCM= hypertrophic cardiomyopathy.*
+We found a prevalence of 1:578, 1:251 and 1:149 for (likely) pathogenic variants associated with ARVC, DCM and HCM respectively. Compared to controls, cardiovascular mortality was higher in DCM G+ (OR 1.67 [95% CI 1.04;2.59], p=0.030), but similar in ARVC and HCM G+ (p≥0.100). More specifically, cardiomyopathy or heart failure diagnosis were more frequent in DCM G+ (OR 3.66 [95% CI 2.24;5.81], p=4.9×10-7) and HCM G+ (OR 3.03 [95% CI 1.98;4.56], p=5.8×10-7), but comparable in ARVC G+ (p=0.172). In contrast, ARVC G+ had more ventricular arrhythmias (p=3.3×10-4) (**[Figure 4](docs/manuscript/Figures.pdf)**). In undiagnosed individuals, left ventricular ejection fraction was reduced in DCM G+ (p=0.009).
 
 ## Conclusions
 
@@ -60,4 +56,4 @@ In the general population, (likely) pathogenic variants associated with ARVC, DC
 
 # Get started
 
-In the ![src folder](src) all scripts can be found. See the ![accompanying README](src/README.md) for further instructions. 
+In the [src folder](src) all scripts can be found. See the [accompanying README](src/README.md) for further instructions. 
