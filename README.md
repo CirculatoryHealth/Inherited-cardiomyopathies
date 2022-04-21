@@ -56,4 +56,4 @@ In the general population, (likely) pathogenic variants associated with ARVC, DC
 
 # Get started
 
-In the [src folder](src) all scripts can be found. See the [accompanying README](src/README.md) for further instructions. 
+In the [src folder](src) all scripts can be found. See the accompanying [README](src/README.md) for further instructions. 
