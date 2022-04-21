@@ -1,0 +1,115 @@
+cff-version: 1.2.0
+title: >-
+  Penetrance and disease expression of (likely)
+  pathogenic variants associated with inherited
+  cardiomyopathies in the general population
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+preffered-citation:
+type: article 
+authors:
+  - given-names: Mimount
+    name-particle: M
+    family-names: Bourfiss
+  - given-names: Marion
+    name-particle: M
+    family-names: van Vugt
+    email: m.vanvugt-2@umcutrecht.nl
+    affiliation: UMC Utrecht
+    orcid: 'https://orcid.org/0000-0002-6634-1989'
+  - given-names: Abdulrahman 
+    name-particle: I
+    family-names: Alasiri
+  - given-names: Bram
+    name-particle: B
+    family-names: Ruijsink
+  - given-names: Jessica
+    name-particle: J
+    family-names: van Setten
+  - given-names: Amand
+    name-particle: A F
+    family-names: Schmidt
+  - given-names: Dennis
+    name-particle: D
+    family-names: Dooijes
+  - given-names: Esther
+    name-particle: E
+    family-names: Puyol-Anton
+  - given-names: Birgitta
+    name-particle: K
+    family-names: Velthuis
+  - given-names: Peter
+    name-particle: J P
+    family-names: van Tintelen
+  - given-names: Anneline
+    name-particle: S J M
+    family-names: te Riele
+  - given-names: Annette
+    name-particle: F
+    family-names: Baas
+  - given-names: Folkert
+    name-particle: W
+    family-names: Asselbergs
+identifiers:
+  - type: doi
+    value: 10.1101/2022.01.06.22268837
+    description: MedrXiv
+repository-code: >-
+  https://github.com/CirculatoryHealth/Inherited-cardiomyopathies
+abstract: >
+  Background. Pathogenic and likely pathogenic
+  variants associated with arrhythmogenic right
+  ventricular cardiomyopathy (ARVC), dilated
+  cardiomyopathy (DCM) and hypertrophic
+  cardiomyopathy (HCM) are recommended to be reported
+  as secondary findings in genome sequencing studies.
+  This provides opportunities for early diagnosis,
+  but also fuels uncertainty in variant carriers
+  (G+), since disease penetrance is incomplete. We
+  assessed the prevalence and disease expression of
+  G+ in the general population.
+
+  Methods. We identified pathogenic and likely
+  pathogenic variants associated with ARVC, DCM
+  and/or HCM in 200,643 UK Biobank individuals, who
+  underwent whole exome sequencing. We calculated the
+  prevalence of G+ and analysed the frequency of
+  cardiomyopathy/heart failure diagnosis. In
+  undiagnosed individuals, we analysed early signs of
+  disease expression.
+
+  Results. We found a prevalence of 1:578, 1:251 and
+  1:149 for (likely) pathogenic variants associated
+  with ARVC, DCM and HCM respectively. Compared to
+  controls, cardiovascular mortality was higher in
+  DCM G+ (OR 1.67 [95% CI 1.04;2.59], p=0.030), but
+  similar in ARVC and HCM G+ (p≥0.100). More
+  specifically, cardiomyopathy or heart failure
+  diagnosis were more frequent in DCM G+ (OR 3.66
+  [95% CI 2.24;5.81], p=4.9×10-7) and HCM G+ (OR 3.03
+  [95% CI 1.98;4.56], p=5.8×10-7), but comparable in
+  ARVC G+ (p=0.172). In contrast, ARVC G+ had more
+  ventricular arrhythmias (p=3.3×10-4). In
+  undiagnosed individuals, left ventricular ejection
+  fraction was reduced in DCM G+ (p=0.009).
+
+  Conclusions. In the general population, (likely)
+  pathogenic variants associated with ARVC, DCM or
+  HCM are not uncommon. Although G+ have increased
+  mortality and morbidity, disease penetrance in
+  these carriers from the general population remains
+  low (1.2-3.1%). Follow-up decisions in case of
+  incidental findings should not be based solely on
+  the variant, but on multiple factors, including
+  family history.
+keywords:
+  - whole exome sequencing
+  - genetics
+  - >-
+    arrhythmogenic right ventricular cardiomyopathy,
+    dilated cardiomyopathy
+  - dilated cardiomyopathy
+  - hypertrophic cardiomyopathy
+license: CC-BY-4.0
+

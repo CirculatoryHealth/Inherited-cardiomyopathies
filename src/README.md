@@ -3,8 +3,8 @@
 ## Individual inclusion
 
 Wrapper script [MCM_wrapper.sh](MCM_wrapper.sh):
-* reads the [configuration file](config/config) 
-* uses the files in [data/raw](data/raw) 
+* reads the [configuration file](../config/config) 
+* uses the files in [data/raw](../data/raw) 
 * includes the variants and individuals for this study 
 
 The following scripts are invoked by the [wrapper](MCM_wrapper.sh):
@@ -36,7 +36,7 @@ The following scripts are invoked by the [wrapper](MCM_wrapper.sh):
       Using all output of previous scripts, the outcomes are defined, dates of diagnoses are included, columns are renamed and some variables are organized.
 
   
-  The final dataset is then stored as [MCM_final_pheno.tsv](../data/processed/MCM_final_pheno.tsv) and this is the input for all analyses and created tables and figures.
+The final dataset is then stored as MCM_final_pheno.tsv and this is the input for all analyses and created tables and figures.
 
 # Analyses
 
