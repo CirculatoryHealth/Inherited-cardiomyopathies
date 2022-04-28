@@ -1,15 +1,15 @@
 FieldID	Field
-94	Diastolic_blood_pressure,_manual_reading
-93	Systolic_blood_pressure,_manual_reading
-6177	Medication_for_cholesterol,_blood_pressure_or_diabetes
-6153	Medication for cholesterol, blood pressure, diabetes, or take exogenous hormones
+94	Diastolic_blood_pressure_manual_reading
+93	Systolic_blood_pressure_manual_reading
+6177	Medication_for_cholesterol_blood_pressure_or_diabetes
+6153	Medication for cholesterol blood pressure diabetes or take exogenous hormones
 6034	Target_heart_rate_achieved
 6033	Maximum_heart_rate_during_fitness_test
 6032	Maximum_workload_during_fitness_test
 6016	Chest_pain_felt_outside_physical_activity
 6015	Chest_pain_felt_during_physical_activity
-5984	ECG,_load
-5983	ECG,_heart_rate
+5984	ECG_load
+5983	ECG_heart_rate
 50	Standing_height
 42040	GP_clinical_event_records
 42039	GP_prescription_records
@@ -30,8 +30,8 @@ FieldID	Field
 41204	Diagnoses_secondary_ICD10
 41202	Diagnoses_main_ICD10
 41201	External_causes_ICD10
-4080	Systolic_blood_pressure,_automated_reading
-4079	Diastolic_blood_pressure,_automated_reading
+4080	Systolic_blood_pressure_automated_reading
+4079	Diastolic_blood_pressure_automated_reading
 40006	Type_of_cancer:_ICD10
 40002	Contributory_(secondary)_causes_of_death:_ICD10
 40001	Underlying_(primary)_cause_of_death:_ICD10
@@ -105,7 +105,7 @@ FieldID	Field
 20004	Operation
 20003	Treatment/medication_code
 20003	Treatment/medication
-20002	Non-cancer_illness_code,_self-reported
+20002	Non-cancer_illness_code_self-reported
 20002	Non-cancer
 12702	Cardiac_index_during_PWA
 12700	Vicorder_results_plausible

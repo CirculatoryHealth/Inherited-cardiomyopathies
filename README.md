@@ -2,7 +2,7 @@
 
 [![DOI](https://img.shields.io/badge/DOI-10.1101%2F2022.01.06.22268837-lightgrey)](https://doi.org/10.1101/2022.01.06.22268837)
 [![License](https://img.shields.io/badge/license-CC--BY--SA--4.0-orange)](https://choosealicense.com/licenses/cc-by-sa-4.0)
-
+[![DOI](https://zenodo.org/badge/386120447.svg)](https://zenodo.org/badge/latestdoi/386120447)
 
 
 > This README and repository accompany the paper _"Penetrance and disease expression of (likely) pathogenic variants associated with inherited cardiomyopathies in the general population"_ by [Bourfiss M. *et al*. **medRxiv 2022**](https://doi.org/10.1101/2022.01.06.22268837).

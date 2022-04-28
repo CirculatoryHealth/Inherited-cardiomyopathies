@@ -2,9 +2,6 @@ Systolic_blood_pressure_manual_reading
 Systolic_blood_pressure_automated_reading
 Diastolic_blood_pressure_manual_reading
 Diastolic_blood_pressure_automated_reading
-Forced_vital_capacity_(FVC)
-Forced_expiratory_volume_in_1-second_(FEV1)
-Peak_expiratory_flow_(PEF)
 ECG_heart_rate
 ECG_load
 Heart_rate_during_PWA
