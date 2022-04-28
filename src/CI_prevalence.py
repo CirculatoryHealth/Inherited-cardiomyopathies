@@ -49,14 +49,14 @@ correct input or set `integer` to `False`')
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-acm = _beta_confidence(282/200643, 200643, integer = False)
-print("ACM prevalence:\t", str(round(200643/282, 0)), " [95% CI", str(round(1/acm[1], 0)), str(round(1/acm[0], 0)) + "]")
+acm = _beta_confidence(347/200643, 200643, integer = False)
+print("ARVC prevalence:\t", str(round(200643/347, 0)), " [95% CI", str(round(1/acm[1], 0)), str(round(1/acm[0], 0)) + "]")
 
-dcm = _beta_confidence(694/200643, 200643, integer = False)
-print("DCM prevalence:\t", str(round(200643/694, 0)), " [95% CI", str(round(1/dcm[1], 0)), str(round(1/dcm[0], 0)) + "]")
+dcm = _beta_confidence(800/200643, 200643, integer = False)
+print("DCM prevalence:\t", str(round(200643/800, 0)), " [95% CI", str(round(1/dcm[1], 0)), str(round(1/dcm[0], 0)) + "]")
 
-dhm = _beta_confidence(566/200643, 200643, integer = False)
-print("DCM prevalence:\t", str(round(200643/566, 0)), " [95% CI", str(round(1/dhm[1], 0)), str(round(1/dhm[0], 0)) + "]")
+hcm = _beta_confidence(1346/200643, 200643, integer = False)
+print("HCM prevalence:\t", str(round(200643/1346, 0)), " [95% CI", str(round(1/dhm[1], 0)), str(round(1/dhm[0], 0)) + "]")
 
-hcm = _beta_confidence(772/200643, 200643, integer = False)
-print("HCM prevalence:\t", str(round(200643/772, 0)), " [95% CI", str(round(1/hcm[1], 0)), str(round(1/hcm[0], 0)) + "]")
+hcm = _beta_confidence(801/200643, 200643, integer = False)
+print("strict HCM prevalence:\t", str(round(200643/801, 0)), " [95% CI", str(round(1/hcm[1], 0)), str(round(1/hcm[0], 0)) + "]")

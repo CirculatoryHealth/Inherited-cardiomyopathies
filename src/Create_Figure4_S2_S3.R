@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 ##
-## Script information ----------------------------------------------------------
+## Script information ---------------------------------------------------------
 ##
 ## Script name: Create_Figure4_S2_S3.R
 ##
@@ -14,13 +14,13 @@
 ## Email: m.vanvugt-2@umcutrecht.nl
 ##
 
-## Options ---------------------------------------------------------------------
+## Options --------------------------------------------------------------------
 
 options(scipen = 6, digits = 4) # view outputs in non-scientific notation
 pix <- 0.393700787
 
 
-## Loading packages ------------------------------------------------------------
+## Loading packages -----------------------------------------------------------
 
 suppressMessages(library(ggpubr))
 suppressMessages(library(forestplot))
@@ -29,7 +29,7 @@ suppressMessages(library(svglite))
 source("src/functions.R")
 
 
-## Loading arguments -----------------------------------------------------------
+## Loading arguments ----------------------------------------------------------
 
 # Arguments expected:
 #     #1 -- Path to and name of the file with CM-stratified differences
@@ -45,15 +45,15 @@ gendif = args[2]
 figs   = args[3]
 
 
-## General options -------------------------------------------------------------
+## General options ------------------------------------------------------------
 
 pheno <- c("Outcomes", "Heart_Failure", "Cardiomyopathy", "HFCM", "Pheno",
-           "Ventricular_arrhythmias", "Atrial_arrhythmias", "Heart_Arrhythmia", 
+           "Ventricular_arrhythmias", "Atrial_arrhythmias", 
            "Chronic_ischaemic_heart_disease", "Angina", 
            "Cardiovascular_Death", "All_cause_mortality")
 
 
-##  Figure S2 - all CMs --------------------------------------------------------
+##  Figure S2 - all CMs -------------------------------------------------------
 
 # Read data
 message(paste0("Read data from ", cmdif))
@@ -106,14 +106,13 @@ text[,1][text[, 1] == "HFCM"] <- "Heart failure + cardiomyopathy"
 text[,1][text[, 1] == "Pheno"] <- "Phenotype positive"
 text[,1][text[, 1] == "Angina"] <- "Angina pectoris"
 text[,1][text[, 1] == "Chronic ischaemic heart disease"] <- "Chronic ischemic heart disease"
-text[,1][text[, 1] == "Heart Arrhythmia"] <- "Self-reported heart arrhythmias"
 text[,1][text[, 1] == "Cardiovascular Death"] <- "Cardiovascular death"
 text[,1][text[, 1] == "All cause mortality"] <- "All-cause mortality"
 
 # Create and save figure S2
 message(paste0("Saving Figure S2 in ", file.path(figs, "FigureS2.pdf")))
 pdf(file.path(figs, "FigureS2.pdf"), paper = "a4", width = 10 * pix, 
-    height = 12 * pix)
+    height = 12 * pix, onefile = FALSE)
 dat %>% group_by(CM) %>% 
     forestplot(labeltext = text, mean = OR, lower = LCI, upper = UCI, 
                zero = 1, fn.ci_norm = c(fpDrawNormalCI, fpDrawDiamondCI, 
@@ -127,7 +126,7 @@ dat %>% group_by(CM) %>%
                lwd.zero = .5, lwd.ci = .5, xlog = TRUE,
                txt_gp = fpTxtGp(label = gpar(cex = .3), xlab = gpar(cex = .35),
                                 ticks = gpar(cex= .3), legend = gpar(cex = .3)),
-               is.summary = c(TRUE, rep(FALSE, 24)), xlab = "Odds ratio (95% CI)")
+               is.summary = c(TRUE, rep(FALSE, 22)), xlab = "Odds ratio (95% CI)")
 dev.off()
 
 
@@ -171,14 +170,13 @@ text[,1][text[, 1] == "HFCM"] <- "Heart failure + cardiomyopathy"
 text[,1][text[, 1] == "Pheno"] <- "Phenotype positive"
 text[,1][text[, 1] == "Angina"] <- "Angina pectoris"
 text[,1][text[, 1] == "Chronic ischaemic heart disease"] <- "Chronic ischemic heart disease"
-text[,1][text[, 1] == "Heart Arrhythmia"] <- "Self-reported heart arrhythmias"
 text[,1][text[, 1] == "Cardiovascular Death"] <- "Cardiovascular death"
 text[,1][text[, 1] == "All cause mortality"] <- "All-cause mortality"
 
 # Create and save forestplot Figure 4
 message(paste0("Saving Figure S4 in ", file.path(figs, "FigureS4.pdf")))
 pdf(file.path(figs, "Figure4.pdf"), paper = "a4", width = 10 * pix, 
-              height = 9 * pix)
+              height = 9 * pix, onefile = FALSE)
 dat %>% group_by(CM) %>% 
     forestplot(labeltext = text, mean = OR, lower = LCI, upper = UCI, zero = 1, 
                fn.ci_norm = c(fpDrawNormalCI, fpDrawDiamondCI, fpDrawCircleCI),
@@ -280,7 +278,7 @@ for (cm in levels(as.factor(data$CM))) {
 
     message(paste0("Saving figure in ", file.path(figs, "FigureS3_"), cm, ".pdf"))
     pdf(paste0(file.path(figs, "FigureS3_"), cm, ".pdf"), paper = "a4",
-        width = 10 * pix, height = h * pix)
+        width = 10 * pix, height = h * pix, onefile = FALSE)
     plot <- dat %>% filter(CM == cm) %>% group_by(Gene) %>% 
         forestplot(labeltext = text, zero = 1, 
                    fn.ci_norm = rep(shapes, ceiling(nrow(temp)/3))[1:nrow(temp)],

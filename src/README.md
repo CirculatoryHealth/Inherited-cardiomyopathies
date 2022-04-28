@@ -40,4 +40,5 @@ The final dataset is then stored as MCM_final_pheno.tsv and this is the input fo
 
 # Analyses
 
+The prevalence and its confidence interval were (manually) calculated by [CI_prevalence.py](CI_prevalence.py).
 Difference testing is performed by the scripts [Create_TableS678.R](Create_TableS678.R) and [Create_TableS9.R](Create_TableS9.R). These files take the final dataset as first argument and the output file names as other arguments. These results are visualized by [Create_Figure4_S2_S3.R](Create_Figure4_S2_S3.R).
