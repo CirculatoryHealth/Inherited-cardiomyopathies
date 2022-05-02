@@ -129,7 +129,8 @@ inc_mat <- function(data, sig = 0.05, sig1 = NULL, pdif = "color",
     #' @param odif Character, type of differentiation for other parameter, 
     #' which is displayed by the p-value being positive or negative
     #' choose from ("color", "colour", "shape"). Default is NULL
-    #' @param oname Character, name of the legend for the other parameter.
+    #' @param oname Character vector, containing the name of the legend for 
+    #' the other parameter, the name of a negative pvalue and a positive one.
     #' Default is NULL
     #' @param cat Either NULL or a character vector, in latter case with length
     #' equal to number of exposures, indicating categories corresponding to the
@@ -197,8 +198,8 @@ inc_mat <- function(data, sig = 0.05, sig1 = NULL, pdif = "color",
 
     if (!is.null(odif)) {
         # Define categories
-        xy$change[xy$p < 0] <- "Negative"
-        xy$change[xy$p >= 0] <- "Positive"
+        xy$change[xy$p < 0] <- oname[2]
+        xy$change[xy$p >= 0] <- oname[3]
         change <- unique(xy$change)
         xy$change <- as.factor(xy$change)
 
@@ -321,7 +322,7 @@ inc_mat <- function(data, sig = 0.05, sig1 = NULL, pdif = "color",
                                na.translate = FALSE, name = "Significance") +
             scale_size_manual(breaks = lev, values = siz, 
                               na.translate = FALSE, name = "Significance") +
-            scale_shape_manual(breaks = change, values = shap, name = oname,
+            scale_shape_manual(breaks = change, values = shap, name = oname[1],
                                na.translate = FALSE) +
             coord_cartesian(xlim = c(1, row), ylim = c(0, col + 1), 
                             clip = "off")
@@ -351,7 +352,7 @@ inc_mat <- function(data, sig = 0.05, sig1 = NULL, pdif = "color",
                   legend.position = legend) +
             guides(x.sec = "axis", y.sec = "axis") +
             scale_color_manual(breaks = change, values = cols, 
-                               na.translate = FALSE, name = oname) +
+                               na.translate = FALSE, name = oname[1]) +
             scale_size_manual(breaks = lev, values = siz, 
                               na.translate = FALSE, name = "Significance") +
             scale_shape_manual(breaks = lev, values = shap, 

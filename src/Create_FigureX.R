@@ -96,6 +96,6 @@ message(paste0("Saving figure in ", output))
 pdf(output, height = 17 * pix, width = 7 * pix, paper = "a4")
 inc_mat(dat, sig1 = 0.05/nrow(dat)/(ncol(dat) - 1), pdif = "shape", 
         xas = "CM", legend = "right", odif = "color", 
-        oname = "Effect direction", cat = cat)
+        oname = c("Effect direction", "OR < 1", "OR >= 1"), cat = cat)
 dev.off()
 
