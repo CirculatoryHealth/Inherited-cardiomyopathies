@@ -45,14 +45,14 @@ output   = args[2]
 message(paste0("Loading data from ", input))
 dat <- read.delim(input) %>%
     select(Phenotype, Estimate, p.value, CM) %>% filter(!is.na(p.value))
-dat$p.value[dat$Estimate <= 1] <- -dat$p.value[dat$Estimate <= 1]
-dat <- dat %>% select(Phenotype, p.value, CM) %>% 
-    tidyr::pivot_wider(names_from = Phenotype, values_from = p.value)
 
 
 ## Prepare data ----------------------------------------------------------------
 
 message("Preparing data")
+dat$p.value[dat$Estimate <= 1] <- -dat$p.value[dat$Estimate <= 1]
+dat <- dat %>% select(Phenotype, p.value, CM) %>% 
+    tidyr::pivot_wider(names_from = Phenotype, values_from = p.value)
 # Change column names for beauty
 dat$CM <- as.factor(dat$CM)
 names(dat)[2:19] <- c("BMI", "MET minutes per week for walking", 
@@ -80,14 +80,14 @@ names(dat)[c(73, 76:78, 84, 85, 91:96)] <- c("Ever smoked",
                                              "Phenotype positive")
 
 # Remove and relocate columns
-out <- c("ECG heart rate", "Obesity")
+out <- c("ECG heart rate", "Obesity", "LVEDM.LVEDV")
 move <- c("Hypertension", "Diabetes", "Ever smoked", "Hypercholesterolaemia", 
           "Family heart disease")
 dat <- dat %>% select(-any_of(out)) %>% relocate(any_of(move), .before = BMI)
 
 # Include categories
 cat <- c(rep("RISK FACTORS", 15), rep("ECG", 7),
-         rep("CMR MEASUREMENTS", 51), rep("CARDIAC OUTCOMES", 20))
+         rep("CMR MEASUREMENTS", 50), rep("CARDIAC OUTCOMES", 20))
 
 
 ## Create and save figure ------------------------------------------------------
@@ -96,6 +96,6 @@ message(paste0("Saving figure in ", output))
 pdf(output, height = 17 * pix, width = 7 * pix, paper = "a4")
 inc_mat(dat, sig1 = 0.05/nrow(dat)/(ncol(dat) - 1), pdif = "shape", 
         xas = "CM", legend = "right", odif = "color", 
-        oname = c("Effect direction", "OR < 1", "OR >= 1"), cat = cat)
+        oname = c("Effect direction", "Negative", "Positive"), cat = cat)
 dev.off()
 

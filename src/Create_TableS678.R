@@ -180,11 +180,13 @@ for (cm in prim) {
                 } else {
                     # Otherwise, perform test
                     test <- wilcox.test(get(x) ~ CM, data = f, conf.int = TRUE)
-                    # Calculate effect size 
-                    eff <- wilcox_effsize(f, as.formula(paste0(x, " ~ CM")))
+                    # Calculate effect direction, for follow-up figure 
+                    tmp <- f %>% select(CM, any_of(x)) %>% as.data.frame
+                    eff <- mean(tmp[, x][tmp$CM == cm], na.rm = TRUE) / 
+                        mean(tmp[, x][tmp$CM == "Controls"], na.rm = TRUE)
                     # Save results 
-                    vals <- c(x, eff$effsize, test$conf.int, test$p.value, 
-                              "MWU", paste0(cm, " G+ vs G-"))
+                    vals <- c(x, eff, test$conf.int, test$p.value, "MWU", 
+                              paste0(cm, " G+ vs G-"))
                 }
                 pval <- rbind(pval, vals)
             } # Don't test ECG and CMR differences for full groups
@@ -199,10 +201,12 @@ for (cm in prim) {
             } else {
                 # Otherwise, perform test
                 test <- wilcox.test(get(x) ~ CM, data = fh, conf.int = TRUE)
-                # Calculate effect size 
-                eff <- wilcox_effsize(fh, as.formula(paste0(x, " ~ CM")))
+                # Calculate effect direction, for follow-up figure 
+                tmp <- f %>% select(CM, any_of(x)) %>% as.data.frame
+                eff <- mean(tmp[, x][tmp$CM == cm], na.rm = TRUE) / 
+                    mean(tmp[, x][tmp$CM == "Controls"], na.rm = TRUE)
                 # Save results 
-                vals <- c(x, eff$effsize, test$conf.int, test$p.value, "MWU", 
+                vals <- c(x, eff, test$conf.int, test$p.value, "MWU", 
                           paste0(cm, " G+P- vs G-P-"))
             }
             pval <- rbind(pval, vals)
@@ -215,8 +219,9 @@ for (cm in prim) {
 
 # Clean up df
 pval[, c("Phenotype", "test", "CM")] <- lapply(pval[, c("Phenotype", "test", "CM")], as.factor)
-pval[, c("Estimate", "LCI", "UCI", "p")] <- lapply(pval[, c("Estimate", "LCI", "UCI", "p")], as.numeric)
+pval[, c("Estimate", "LCI", "UCI")] <- lapply(pval[, c("Estimate", "LCI", "UCI")], as.numeric)
 pval <- pval %>% mutate(across(where(is.numeric), round, 3))
+pval$p <- as.numeric(pval$p)
 pval$p <- ifelse(pval$p < 0.001, signif(pval$p, 2), round(pval$p, 3)) 
 names(pval) <- c("Phenotype", "Estimate", "95% LCI", "95% UCI", "p-value", 
                  "test", "CM")
