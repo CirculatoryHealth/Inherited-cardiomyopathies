@@ -5,7 +5,7 @@
 [![DOI](https://zenodo.org/badge/386120447.svg)](https://zenodo.org/badge/latestdoi/386120447)
 
 
-> This README and repository accompany the paper _"Penetrance and disease expression of (likely) pathogenic variants associated with inherited cardiomyopathies in the general population"_ by [Bourfiss M. *et al*. **medRxiv 2022**](https://doi.org/10.1101/2022.01.06.22268837).
+> This README and repository accompany the paper _"Prevalence and disease expression of pathogenic and likely pathogenic variants associated with inherited cardiomyopathies in the general population"_ by [Bourfiss M. *et al*. **medRxiv 2022**](https://doi.org/10.1101/2022.01.06.22268837).
 --------------
 
 # Content

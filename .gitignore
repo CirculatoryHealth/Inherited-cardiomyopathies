@@ -11,6 +11,7 @@ core*
 *swp
 *swo
 _archive_/*
+.*
 
 # R files
 .Rproj.user
