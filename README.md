@@ -1,4 +1,4 @@
-# Penetrance and disease expression of pathogenic and likely pathogenic variants associated with inherited cardiomyopathies in the general population
+# Prevalence and disease expression of pathogenic and likely pathogenic variants associated with inherited cardiomyopathies in the general population
 
 [![DOI](https://img.shields.io/badge/DOI-10.1101%2F2022.01.06.22268837-lightgrey)](https://doi.org/10.1101/2022.01.06.22268837)
 [![License](https://img.shields.io/badge/license-CC--BY--SA--4.0-orange)](https://choosealicense.com/licenses/cc-by-sa-4.0)
