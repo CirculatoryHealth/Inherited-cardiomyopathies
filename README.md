@@ -2,7 +2,7 @@
 
 __version__: `1.0`
 
-[![DOI](https://img.shields.io/badge/DOI-10.1101%2F2022.01.06.22268837-lightgrey)](https://doi.org/10.1161/CIRCGEN.122.003704)
+[![DOI](https://img.shields.io/badge/DOI-10.1161%FCIRCGEN.122.003704-lightgrey)](https://doi.org/10.1161/CIRCGEN.122.003704)
 [![License](https://img.shields.io/badge/license-CC--BY--SA--4.0-orange)](https://choosealicense.com/licenses/cc-by-sa-4.0)
 [![DOI](https://zenodo.org/badge/386120447.svg)](https://zenodo.org/badge/latestdoi/386120447)
 
