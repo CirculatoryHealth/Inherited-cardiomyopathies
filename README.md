@@ -1,11 +1,13 @@
 # Prevalence and disease expression of pathogenic and likely pathogenic variants associated with inherited cardiomyopathies in the general population
 
-[![DOI](https://img.shields.io/badge/DOI-10.1101%2F2022.01.06.22268837-lightgrey)](https://doi.org/10.1101/2022.01.06.22268837)
+__version__: `1.0`
+
+[![DOI](https://img.shields.io/badge/DOI-10.1101%2F2022.01.06.22268837-lightgrey)](https://doi.org/10.1161/CIRCGEN.122.003704)
 [![License](https://img.shields.io/badge/license-CC--BY--SA--4.0-orange)](https://choosealicense.com/licenses/cc-by-sa-4.0)
 [![DOI](https://zenodo.org/badge/386120447.svg)](https://zenodo.org/badge/latestdoi/386120447)
 
 
-> This README and repository accompany the paper _"Prevalence and disease expression of pathogenic and likely pathogenic variants associated with inherited cardiomyopathies in the general population"_ by [Bourfiss M. *et al*. **medRxiv 2022**](https://doi.org/10.1101/2022.01.06.22268837).
+> This README and repository accompany the paper _"Prevalence and Disease Expression of Pathogenic and Likely Pathogenic Variants Associated With Inherited Cardiomyopathies in the General Population"_ by [Bourfiss M. *et al*. **Circ Genom Precis Med. (2022)**](https://doi.org/10.1161/CIRCGEN.122.003704).
 --------------
 
 # Content
